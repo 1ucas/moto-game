@@ -4,6 +4,7 @@
 // ============= LEADERBOARD SYSTEM =============
 const LEADERBOARD_KEY = 'ifoodRushLeaderboard';
 const MAX_LEADERBOARD_ENTRIES = 10;
+const JOYSTICK_POSITION_KEY = 'ifoodRushJoystickPosition';
 
 function getLeaderboard() {
     try {
@@ -29,7 +30,6 @@ function addScoreToLeaderboard(scoreData) {
         score: scoreData.score,
         deliveries: scoreData.deliveries,
         distance: scoreData.distance,
-        maxCombo: scoreData.maxCombo,
         date: new Date().toISOString()
     };
 
@@ -71,7 +71,7 @@ function showLeaderboard() {
     leaderboardBody.innerHTML = '';
 
     if (leaderboard.length === 0) {
-        leaderboardBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">Nenhum recorde ainda! Jogue para aparecer aqui.</td></tr>';
+        leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">Nenhum recorde ainda! Jogue para aparecer aqui.</td></tr>';
     } else {
         leaderboard.forEach((entry, index) => {
             const row = document.createElement('tr');
@@ -80,7 +80,6 @@ function showLeaderboard() {
                 <td class="rank-cell">${rankEmoji} ${index + 1}º</td>
                 <td class="score-cell">R$ ${entry.score.toLocaleString('pt-BR')}</td>
                 <td>${entry.deliveries}</td>
-                <td>x${entry.maxCombo.toFixed(1)}</td>
                 <td class="date-cell">${formatLeaderboardDate(entry.date)}</td>
             `;
             if (index < 3) {
@@ -97,6 +96,73 @@ function hideLeaderboard() {
     document.getElementById('leaderboard-screen').style.display = 'none';
 }
 
+// ============= JOYSTICK POSITION PREFERENCE =============
+function getJoystickPositionPreference() {
+    try {
+        const saved = localStorage.getItem(JOYSTICK_POSITION_KEY);
+        return saved || 'left'; // Default to left
+    } catch (e) {
+        return 'left';
+    }
+}
+
+function saveJoystickPositionPreference(position) {
+    try {
+        localStorage.setItem(JOYSTICK_POSITION_KEY, position);
+    } catch (e) {
+        console.error('Error saving joystick position:', e);
+    }
+}
+
+function setJoystickPosition(position) {
+    // Save preference
+    saveJoystickPositionPreference(position);
+
+    // Update UI buttons
+    const leftBtn = document.getElementById('joystick-left-btn');
+    const rightBtn = document.getElementById('joystick-right-btn');
+
+    if (position === 'left') {
+        leftBtn.classList.add('active');
+        rightBtn.classList.remove('active');
+    } else {
+        rightBtn.classList.add('active');
+        leftBtn.classList.remove('active');
+    }
+
+    // Update joystick position
+    applyJoystickPosition(position);
+}
+
+function applyJoystickPosition(position) {
+    const joystickContainer = document.getElementById('joystick-container');
+    if (joystickContainer) {
+        joystickContainer.classList.remove('position-left', 'position-right');
+        joystickContainer.classList.add(`position-${position}`);
+    }
+}
+
+function initJoystickPosition() {
+    const savedPosition = getJoystickPositionPreference();
+
+    // Update UI buttons to reflect saved preference
+    const leftBtn = document.getElementById('joystick-left-btn');
+    const rightBtn = document.getElementById('joystick-right-btn');
+
+    if (leftBtn && rightBtn) {
+        if (savedPosition === 'left') {
+            leftBtn.classList.add('active');
+            rightBtn.classList.remove('active');
+        } else {
+            rightBtn.classList.add('active');
+            leftBtn.classList.remove('active');
+        }
+    }
+
+    // Apply position to joystick
+    applyJoystickPosition(savedPosition);
+}
+
 // ============= GAME CONFIG =============
 const CONFIG = {
     GAME_TIME: 180, // 3 minutes
@@ -104,8 +170,6 @@ const CONFIG = {
     BUILDING_COUNT: 40,
     CAR_COUNT: 8,
     DELIVERY_BASE_REWARD: 15,
-    COMBO_MULTIPLIER: 1.5,
-    COMBO_TIMEOUT: 10000, // 10 seconds to maintain combo
     MAX_SPEED: 25,
     ACCELERATION: 0.08,
     BRAKE_POWER: 0.15,
@@ -126,9 +190,6 @@ let clouds = [];
 let currentOrder = null;
 let hasFood = false;
 let score = 0;
-let combo = 1;
-let maxCombo = 1;
-let comboTimer = null;
 let deliveriesCount = 0;
 let distanceTraveled = 0;
 let lastPosition = { x: 0, z: 0 };
@@ -202,6 +263,9 @@ function init() {
         cursor.style.left = e.clientX + 'px';
         cursor.style.top = e.clientY + 'px';
     });
+
+    // Initialize joystick position preference
+    initJoystickPosition();
 
     // Hide loading, show start
     document.getElementById('loading').style.display = 'none';
@@ -1002,6 +1066,7 @@ function setupControls() {
 // ============= VIRTUAL JOYSTICK =============
 let joystickActive = false;
 let joystickTouchId = null;
+let joystickInput = { x: 0, y: 0 }; // Store normalized joystick values
 
 function setupVirtualJoystick() {
     const joystickBase = document.getElementById('joystick-base');
@@ -1048,6 +1113,10 @@ function setupVirtualJoystick() {
         const absX = Math.abs(normalizedX);
         const absY = Math.abs(normalizedY);
 
+        // Store smoothed joystick input for gradual turning
+        joystickInput.x = absX > deadzone ? normalizedX : 0;
+        joystickInput.y = absY > deadzone ? normalizedY : 0;
+
         // Update control keys based on joystick position
         keys.left = normalizedX < -deadzone;
         keys.right = normalizedX > deadzone;
@@ -1062,6 +1131,8 @@ function setupVirtualJoystick() {
         keys.backward = false;
         keys.left = false;
         keys.right = false;
+        joystickInput.x = 0;
+        joystickInput.y = 0;
         joystickActive = false;
         joystickTouchId = null;
     }
@@ -1162,11 +1233,19 @@ function updateMotorcycle(delta) {
     // Turning (only when moving)
     if (Math.abs(speed) > 1) {
         const turnFactor = Math.min(Math.abs(speed) / 30, 1);
-        if (keys.left) {
-            rotation += CONFIG.TURN_SPEED * turnFactor;
-        }
-        if (keys.right) {
-            rotation -= CONFIG.TURN_SPEED * turnFactor;
+
+        // Use smoother turning when joystick is active
+        if (joystickActive && joystickInput.x !== 0) {
+            // Apply gradual turning based on joystick position (reduced by 60% for smoother control)
+            rotation -= CONFIG.TURN_SPEED * turnFactor * joystickInput.x * 0.6;
+        } else {
+            // Keyboard input uses full turning
+            if (keys.left) {
+                rotation += CONFIG.TURN_SPEED * turnFactor;
+            }
+            if (keys.right) {
+                rotation -= CONFIG.TURN_SPEED * turnFactor;
+            }
         }
     }
 
@@ -1330,28 +1409,14 @@ function pickupFood() {
 }
 
 function deliverFood() {
-    // Calculate reward with combo
-    const baseReward = CONFIG.DELIVERY_BASE_REWARD + Math.floor(Math.random() * 10);
-    const reward = Math.floor(baseReward * combo);
+    // Calculate reward
+    const reward = CONFIG.DELIVERY_BASE_REWARD + Math.floor(Math.random() * 10);
 
     score += reward;
     deliveriesCount++;
 
     // Play celebration sound
     playDeliverySound();
-
-    // Update combo
-    combo = Math.min(combo + 0.5, 5);
-    maxCombo = Math.max(maxCombo, combo);
-
-    // Reset combo timer
-    if (comboTimer) clearTimeout(comboTimer);
-    comboTimer = setTimeout(() => {
-        combo = 1;
-        updateComboDisplay();
-    }, CONFIG.COMBO_TIMEOUT);
-
-    updateComboDisplay();
 
     // Funny Brazilian delivery messages
     const messages = [
@@ -1496,15 +1561,6 @@ function updateMinimap() {
     }
 }
 
-function updateComboDisplay() {
-    const comboElement = document.getElementById('combo');
-    if (combo > 1) {
-        comboElement.textContent = `COMBO x${combo.toFixed(1)}!`;
-        comboElement.classList.add('visible');
-    } else {
-        comboElement.classList.remove('visible');
-    }
-}
 
 function showMessage(emoji, text, subtext) {
     const popup = document.getElementById('message-popup');
@@ -1645,8 +1701,6 @@ function startGame() {
 
     // Reset game state
     score = 0;
-    combo = 1;
-    maxCombo = 1;
     deliveriesCount = 0;
     distanceTraveled = 0;
     gameTime = CONFIG.GAME_TIME;
@@ -1697,7 +1751,6 @@ function endGame() {
     document.getElementById('final-score').textContent = score.toLocaleString('pt-BR');
     document.getElementById('stat-deliveries').textContent = deliveriesCount;
     document.getElementById('stat-distance').textContent = (distanceTraveled / 1000).toFixed(1);
-    document.getElementById('stat-max-combo').textContent = `x${maxCombo.toFixed(1)}`;
 
     // Check for new record before saving
     const isRecord = isNewRecord(score);
@@ -1707,8 +1760,7 @@ function endGame() {
     const rank = addScoreToLeaderboard({
         score: score,
         deliveries: deliveriesCount,
-        distance: parseFloat((distanceTraveled / 1000).toFixed(1)),
-        maxCombo: maxCombo
+        distance: parseFloat((distanceTraveled / 1000).toFixed(1))
     });
 
     // Show NEW RECORD badge if it's a new high score
