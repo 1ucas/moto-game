@@ -47,8 +47,7 @@ const keys = {
     forward: false,
     backward: false,
     left: false,
-    right: false,
-    boost: false
+    right: false
 };
 
 // Audio context
@@ -876,10 +875,6 @@ function setupControls() {
             case 'ArrowRight':
                 keys.right = true;
                 break;
-            case 'ShiftLeft':
-            case 'ShiftRight':
-                keys.boost = true;
-                break;
         }
     });
 
@@ -901,32 +896,127 @@ function setupControls() {
             case 'ArrowRight':
                 keys.right = false;
                 break;
-            case 'ShiftLeft':
-            case 'ShiftRight':
-                keys.boost = false;
-                break;
         }
     });
 
-    // Mobile controls
-    const setupMobileBtn = (id, keyName) => {
-        const btn = document.getElementById(id);
-        if (btn) {
-            btn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                keys[keyName] = true;
-            });
-            btn.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                keys[keyName] = false;
-            });
-        }
-    };
+    // Mobile virtual joystick
+    setupVirtualJoystick();
+}
 
-    setupMobileBtn('btn-up', 'forward');
-    setupMobileBtn('btn-down', 'backward');
-    setupMobileBtn('btn-left', 'left');
-    setupMobileBtn('btn-right', 'right');
+// ============= VIRTUAL JOYSTICK =============
+let joystickActive = false;
+let joystickTouchId = null;
+
+function setupVirtualJoystick() {
+    const joystickBase = document.getElementById('joystick-base');
+    const joystickStick = document.getElementById('joystick-stick');
+
+    if (!joystickBase || !joystickStick) return;
+
+    const baseRect = { width: 140, height: 140 };
+    const maxDistance = 40; // Maximum joystick movement radius
+    const deadzone = 0.15; // Deadzone threshold (15%)
+
+    function getJoystickCenter() {
+        const rect = joystickBase.getBoundingClientRect();
+        return {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+        };
+    }
+
+    function handleJoystickMove(clientX, clientY) {
+        const center = getJoystickCenter();
+
+        // Calculate offset from center
+        let deltaX = clientX - center.x;
+        let deltaY = clientY - center.y;
+
+        // Calculate distance from center
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        // Clamp to max distance
+        if (distance > maxDistance) {
+            deltaX = (deltaX / distance) * maxDistance;
+            deltaY = (deltaY / distance) * maxDistance;
+        }
+
+        // Update stick position
+        joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+
+        // Normalize values (-1 to 1)
+        const normalizedX = deltaX / maxDistance;
+        const normalizedY = deltaY / maxDistance;
+
+        // Apply deadzone
+        const absX = Math.abs(normalizedX);
+        const absY = Math.abs(normalizedY);
+
+        // Update control keys based on joystick position
+        keys.left = normalizedX < -deadzone;
+        keys.right = normalizedX > deadzone;
+        keys.forward = normalizedY < -deadzone;
+        keys.backward = normalizedY > deadzone;
+    }
+
+    function resetJoystick() {
+        joystickStick.style.transform = 'translate(-50%, -50%)';
+        joystickStick.classList.remove('active');
+        keys.forward = false;
+        keys.backward = false;
+        keys.left = false;
+        keys.right = false;
+        joystickActive = false;
+        joystickTouchId = null;
+    }
+
+    // Touch events
+    joystickBase.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (joystickActive) return;
+
+        const touch = e.changedTouches[0];
+        joystickTouchId = touch.identifier;
+        joystickActive = true;
+        joystickStick.classList.add('active');
+        handleJoystickMove(touch.clientX, touch.clientY);
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!joystickActive) return;
+
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            if (touch.identifier === joystickTouchId) {
+                e.preventDefault();
+                handleJoystickMove(touch.clientX, touch.clientY);
+                break;
+            }
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchend', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            if (touch.identifier === joystickTouchId) {
+                resetJoystick();
+                break;
+            }
+        }
+    });
+
+    document.addEventListener('touchcancel', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            if (touch.identifier === joystickTouchId) {
+                resetJoystick();
+                break;
+            }
+        }
+    });
+
+    // Prevent context menu on long press
+    joystickBase.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 // ============= GAME LOOP =============
@@ -959,8 +1049,8 @@ function animate() {
 }
 
 function updateMotorcycle(delta) {
-    const acceleration = keys.boost ? CONFIG.ACCELERATION * 1.5 : CONFIG.ACCELERATION;
-    const maxSpeed = keys.boost ? CONFIG.MAX_SPEED * 1.3 : CONFIG.MAX_SPEED;
+    const acceleration = CONFIG.ACCELERATION;
+    const maxSpeed = CONFIG.MAX_SPEED;
 
     // Acceleration
     if (keys.forward) {
@@ -1445,10 +1535,25 @@ function startGame() {
 
     gameRunning = true;
 
-    // Show welcome message
+    // Show welcome message based on device type
     setTimeout(() => {
-        showMessage("🏍️", "Bora trabalhar!", "Use WASD ou setas para dirigir");
+        const isTouchDevice = isMobileDevice();
+        if (isTouchDevice) {
+            showMessage("🏍️", "Bora trabalhar!", "Use o joystick para dirigir");
+        } else {
+            showMessage("🏍️", "Bora trabalhar!", "Use WASD ou setas para dirigir");
+        }
     }, 500);
+}
+
+// Detect if user is on a mobile/touch device
+function isMobileDevice() {
+    return (
+        ('ontouchstart' in window) ||
+        (navigator.maxTouchPoints > 0) ||
+        (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+        window.innerWidth <= 768
+    );
 }
 
 function endGame() {
