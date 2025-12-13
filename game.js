@@ -1592,6 +1592,15 @@ function showMessage(emoji, text, subtext) {
 // ============= GAME FLOW =============
 function initAudio() {
     try {
+        // Reuse existing audio context if already initialized
+        if (audioContext && oscillator) {
+            // Just ensure the audio context is running (may be suspended)
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            return;
+        }
+
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         gainNode = audioContext.createGain();
         gainNode.connect(audioContext.destination);
@@ -1620,6 +1629,13 @@ function updateEngineSound() {
     // Volume based on speed
     const volume = Math.min(Math.abs(speed) / 30, 0.15);
     gainNode.gain.setTargetAtTime(volume, audioContext.currentTime, 0.1);
+}
+
+function stopEngineSound() {
+    if (!audioContext || !gainNode) return;
+
+    // Silence the engine sound
+    gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.1);
 }
 
 function playPickupSound() {
@@ -1751,6 +1767,9 @@ function isMobileDevice() {
 
 function endGame() {
     gameRunning = false;
+
+    // Stop the engine sound
+    stopEngineSound();
 
     // Show cursor again
     document.body.classList.remove('game-active');
