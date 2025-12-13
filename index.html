@@ -22,6 +22,9 @@
             --sky-blue: #00BFFF;
             --grass-green: #4CAF50;
             --day-bg: #87CEEB;
+            --neon-yellow: #FFD700;
+            --neon-cyan: #00FFFF;
+            --night-sky: #0a0a1a;
         }
 
         body {
@@ -574,6 +577,7 @@
             font-size: 3rem;
             color: var(--neon-yellow);
             margin-bottom: 2rem;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
         }
 
         .stats-grid {
@@ -594,6 +598,7 @@
             font-family: 'Bangers', cursive;
             font-size: 2.5rem;
             color: var(--neon-cyan);
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
         }
 
         .stat-label {
@@ -901,6 +906,20 @@
 
         .leaderboard-table tr.top-rank .score-cell {
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .leaderboard-table tr.current-entry {
+            background: rgba(234, 29, 44, 0.2);
+            border-left: 3px solid var(--ifood-red);
+        }
+
+        .leaderboard-table tr.current-entry td {
+            color: #fff;
+        }
+
+        .leaderboard-table tr.current-entry .date-cell {
+            color: var(--ifood-red);
+            font-weight: 600;
         }
 
         .leaderboard-close-btn {
