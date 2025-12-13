@@ -6,6 +6,9 @@ const LEADERBOARD_KEY = 'ifoodRushLeaderboard';
 const MAX_LEADERBOARD_ENTRIES = 10;
 const JOYSTICK_POSITION_KEY = 'ifoodRushJoystickPosition';
 
+// Track the last added entry to highlight it in leaderboard
+let lastAddedEntryDate = null;
+
 function getLeaderboard() {
     try {
         const data = localStorage.getItem(LEADERBOARD_KEY);
@@ -32,6 +35,9 @@ function addScoreToLeaderboard(scoreData) {
         distance: scoreData.distance,
         date: new Date().toISOString()
     };
+
+    // Track this entry as the last added one
+    lastAddedEntryDate = entry.date;
 
     leaderboard.push(entry);
     // Sort by score descending
@@ -76,14 +82,19 @@ function showLeaderboard() {
         leaderboard.forEach((entry, index) => {
             const row = document.createElement('tr');
             const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+            const positionText = rankEmoji ? rankEmoji : `#${index + 1}`;
+            const isCurrentEntry = lastAddedEntryDate && entry.date === lastAddedEntryDate;
             row.innerHTML = `
-                <td class="rank-cell">${rankEmoji} ${index + 1}º</td>
+                <td class="rank-cell">${positionText}</td>
                 <td class="score-cell">R$ ${entry.score.toLocaleString('pt-BR')}</td>
                 <td>${entry.deliveries}</td>
-                <td class="date-cell">${formatLeaderboardDate(entry.date)}</td>
+                <td class="date-cell">${formatLeaderboardDate(entry.date)}${isCurrentEntry ? ' ←' : ''}</td>
             `;
             if (index < 3) {
                 row.classList.add('top-rank');
+            }
+            if (isCurrentEntry) {
+                row.classList.add('current-entry');
             }
             leaderboardBody.appendChild(row);
         });
