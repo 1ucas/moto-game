@@ -64,14 +64,12 @@ function init() {
     scene.fog = new THREE.Fog(0x87CEEB, 100, 400);
 
     // Camera
-    const isMobile = window.innerWidth <= 768;
-    const availableHeight = isMobile ? window.innerHeight - 120 : window.innerHeight;
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth / availableHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 8, 15);
 
     // Renderer - optimized settings
     renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-    renderer.setSize(window.innerWidth, availableHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(1); // Fixed pixel ratio for performance
     renderer.shadowMap.enabled = false; // Disable shadows for performance
     document.getElementById('game-container').appendChild(renderer.domElement);
@@ -1475,12 +1473,9 @@ function restartGame() {
 }
 
 function onWindowResize() {
-    const isMobile = window.innerWidth <= 768;
-    const availableHeight = isMobile ? window.innerHeight - 120 : window.innerHeight;
-
-    camera.aspect = window.innerWidth / availableHeight;
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, availableHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 // ============= ENVIRONMENT EFFECTS =============

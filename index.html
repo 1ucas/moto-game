@@ -49,14 +49,8 @@
 
         canvas {
             display: block;
-        }
-
-        @media (max-width: 768px) {
-            canvas {
-                max-height: calc(100vh - 120px);
-                max-width: 100vw;
-                object-fit: contain;
-            }
+            width: 100%;
+            height: 100%;
         }
 
         /* Custom Cursor - Motorcycle */
@@ -636,12 +630,13 @@
         /* Mobile controls */
         .mobile-controls {
             position: absolute;
-            bottom: 20px;
+            bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
             display: none;
             gap: 20px;
             pointer-events: auto;
+            z-index: 200;
         }
 
         @media (max-width: 768px) {
@@ -673,7 +668,7 @@
             /* Repositioned and smaller orders panel on mobile */
             .orders-panel {
                 top: auto;
-                bottom: 100px;
+                bottom: 220px;
                 right: 10px;
                 transform: none;
                 max-width: 140px;
