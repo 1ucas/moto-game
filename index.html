@@ -230,6 +230,63 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
+        /* Joystick position settings */
+        .joystick-settings {
+            position: relative;
+            z-index: 2;
+            margin-top: 1.5rem;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            animation: fadeIn 1s ease-out 1s both;
+        }
+
+        .settings-label {
+            color: rgba(0,60,100,0.8);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .joystick-toggle {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.3);
+            padding: 4px;
+            border-radius: 25px;
+        }
+
+        .toggle-btn {
+            padding: 0.5rem 1.2rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: rgba(0,60,100,0.7);
+            background: transparent;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-btn.active {
+            background: var(--ifood-red);
+            color: white;
+            box-shadow: 0 2px 8px rgba(234, 29, 44, 0.4);
+        }
+
+        .toggle-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.5);
+        }
+
+        /* Show joystick settings only on touch devices */
+        @media (pointer: coarse), (max-width: 768px) {
+            .joystick-settings {
+                display: flex;
+            }
+        }
+
         /* Floating emojis decoration */
         .floating-emoji {
             position: absolute;
@@ -521,7 +578,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             margin-bottom: 2rem;
         }
@@ -598,34 +655,6 @@
             font-size: 1.2rem;
         }
 
-        /* Combo indicator */
-        .combo-display {
-            position: absolute;
-            top: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'Bangers', cursive;
-            font-size: 2rem;
-            color: var(--ifood-red);
-            text-shadow: 2px 2px 0 #fff, -1px -1px 0 #fff;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            background: rgba(255,255,255,0.9);
-            padding: 8px 20px;
-            border-radius: 30px;
-            border: 3px solid var(--ifood-red);
-        }
-
-        .combo-display.visible {
-            opacity: 1;
-            animation: comboShake 0.3s ease;
-        }
-
-        @keyframes comboShake {
-            0%, 100% { transform: translateX(-50%) rotate(0deg); }
-            25% { transform: translateX(-50%) rotate(-5deg); }
-            75% { transform: translateX(-50%) rotate(5deg); }
-        }
 
         /* Mobile controls */
         .mobile-controls {
@@ -643,8 +672,18 @@
         .joystick-container {
             position: absolute;
             bottom: 30px;
-            left: 30px;
             pointer-events: auto;
+            transition: left 0.3s ease, right 0.3s ease;
+        }
+
+        .joystick-container.position-left {
+            left: 30px;
+            right: auto;
+        }
+
+        .joystick-container.position-right {
+            right: 30px;
+            left: auto;
         }
 
         .joystick-base {
@@ -761,12 +800,6 @@
                 font-size: 0.9rem;
             }
 
-            /* Smaller combo display */
-            .combo-display {
-                top: 80px;
-                font-size: 1.2rem;
-                padding: 5px 12px;
-            }
 
             /* Hide desktop instructions on mobile */
             .instructions {
@@ -1021,6 +1054,19 @@
                 <p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> ou <kbd>Setas</kbd> para dirigir</p>
             </div>
 
+            <!-- Joystick position settings (mobile) -->
+            <div class="joystick-settings">
+                <p class="settings-label">Controle Virtual:</p>
+                <div class="joystick-toggle">
+                    <button class="toggle-btn active" id="joystick-left-btn" onclick="setJoystickPosition('left')">
+                        ⬅️ Esquerda
+                    </button>
+                    <button class="toggle-btn" id="joystick-right-btn" onclick="setJoystickPosition('right')">
+                        Direita ➡️
+                    </button>
+                </div>
+            </div>
+
             <button class="leaderboard-btn" onclick="showLeaderboard()">🏆 Ver Ranking</button>
         </div>
 
@@ -1049,8 +1095,6 @@
                     <div class="minimap-player"></div>
                 </div>
             </div>
-
-            <div class="combo-display" id="combo">COMBO x2!</div>
 
             <div class="message-popup" id="message-popup">
                 <div class="message-emoji" id="message-emoji">🍕</div>
@@ -1085,10 +1129,6 @@
                     <div class="stat-value" id="stat-distance">0</div>
                     <div class="stat-label">Km Rodados</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="stat-max-combo">0</div>
-                    <div class="stat-label">Max Combo</div>
-                </div>
             </div>
             <button class="restart-btn" onclick="restartGame()">JOGAR DE NOVO</button>
             <button class="leaderboard-btn" onclick="showLeaderboard()" style="animation: none;">🏆 Ver Ranking</button>
@@ -1104,7 +1144,6 @@
                             <th>Posição</th>
                             <th>Dinheiro</th>
                             <th>Entregas</th>
-                            <th>Combo</th>
                             <th>Data</th>
                         </tr>
                     </thead>
