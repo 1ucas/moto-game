@@ -1,6 +1,102 @@
 // iFood Delivery Rush - The Game!
 // A fun Three.js delivery game
 
+// ============= LEADERBOARD SYSTEM =============
+const LEADERBOARD_KEY = 'ifoodRushLeaderboard';
+const MAX_LEADERBOARD_ENTRIES = 10;
+
+function getLeaderboard() {
+    try {
+        const data = localStorage.getItem(LEADERBOARD_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch (e) {
+        console.error('Error loading leaderboard:', e);
+        return [];
+    }
+}
+
+function saveLeaderboard(leaderboard) {
+    try {
+        localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+    } catch (e) {
+        console.error('Error saving leaderboard:', e);
+    }
+}
+
+function addScoreToLeaderboard(scoreData) {
+    const leaderboard = getLeaderboard();
+    const entry = {
+        score: scoreData.score,
+        deliveries: scoreData.deliveries,
+        distance: scoreData.distance,
+        maxCombo: scoreData.maxCombo,
+        date: new Date().toISOString()
+    };
+
+    leaderboard.push(entry);
+    // Sort by score descending
+    leaderboard.sort((a, b) => b.score - a.score);
+    // Keep only top entries
+    const trimmedLeaderboard = leaderboard.slice(0, MAX_LEADERBOARD_ENTRIES);
+    saveLeaderboard(trimmedLeaderboard);
+
+    // Return the rank (1-indexed) or -1 if not in top scores
+    const rank = trimmedLeaderboard.findIndex(e =>
+        e.score === entry.score &&
+        e.date === entry.date
+    );
+    return rank !== -1 ? rank + 1 : -1;
+}
+
+function isNewRecord(score) {
+    const leaderboard = getLeaderboard();
+    if (leaderboard.length < MAX_LEADERBOARD_ENTRIES) return true;
+    return score > leaderboard[leaderboard.length - 1].score;
+}
+
+function formatLeaderboardDate(isoDate) {
+    const date = new Date(isoDate);
+    return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: '2-digit'
+    });
+}
+
+function showLeaderboard() {
+    const leaderboard = getLeaderboard();
+    const leaderboardScreen = document.getElementById('leaderboard-screen');
+    const leaderboardBody = document.getElementById('leaderboard-body');
+
+    leaderboardBody.innerHTML = '';
+
+    if (leaderboard.length === 0) {
+        leaderboardBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">Nenhum recorde ainda! Jogue para aparecer aqui.</td></tr>';
+    } else {
+        leaderboard.forEach((entry, index) => {
+            const row = document.createElement('tr');
+            const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+            row.innerHTML = `
+                <td class="rank-cell">${rankEmoji} ${index + 1}º</td>
+                <td class="score-cell">R$ ${entry.score.toLocaleString('pt-BR')}</td>
+                <td>${entry.deliveries}</td>
+                <td>x${entry.maxCombo.toFixed(1)}</td>
+                <td class="date-cell">${formatLeaderboardDate(entry.date)}</td>
+            `;
+            if (index < 3) {
+                row.classList.add('top-rank');
+            }
+            leaderboardBody.appendChild(row);
+        });
+    }
+
+    leaderboardScreen.style.display = 'flex';
+}
+
+function hideLeaderboard() {
+    document.getElementById('leaderboard-screen').style.display = 'none';
+}
+
 // ============= GAME CONFIG =============
 const CONFIG = {
     GAME_TIME: 180, // 3 minutes
@@ -1505,6 +1601,38 @@ function playDeliverySound() {
     });
 }
 
+function playRecordSound() {
+    if (!audioContext) return;
+
+    // Triumphant fanfare for new record!
+    const notes = [
+        { freq: 523.25, delay: 0, duration: 0.15 },     // C5
+        { freq: 659.25, delay: 0.1, duration: 0.15 },   // E5
+        { freq: 783.99, delay: 0.2, duration: 0.15 },   // G5
+        { freq: 1046.50, delay: 0.3, duration: 0.3 },   // C6
+        { freq: 987.77, delay: 0.5, duration: 0.15 },   // B5
+        { freq: 1046.50, delay: 0.65, duration: 0.4 },  // C6 (hold)
+    ];
+
+    notes.forEach(note => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+
+        osc.type = 'triangle';
+        osc.frequency.value = note.freq;
+
+        const startTime = audioContext.currentTime + note.delay;
+        gain.gain.setValueAtTime(0.25, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + note.duration);
+
+        osc.start(startTime);
+        osc.stop(startTime + note.duration);
+    });
+}
+
 function startGame() {
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('hud').style.display = 'block';
@@ -1570,6 +1698,26 @@ function endGame() {
     document.getElementById('stat-deliveries').textContent = deliveriesCount;
     document.getElementById('stat-distance').textContent = (distanceTraveled / 1000).toFixed(1);
     document.getElementById('stat-max-combo').textContent = `x${maxCombo.toFixed(1)}`;
+
+    // Check for new record before saving
+    const isRecord = isNewRecord(score);
+    const newRecordBadge = document.getElementById('new-record-badge');
+
+    // Save score to leaderboard
+    const rank = addScoreToLeaderboard({
+        score: score,
+        deliveries: deliveriesCount,
+        distance: parseFloat((distanceTraveled / 1000).toFixed(1)),
+        maxCombo: maxCombo
+    });
+
+    // Show NEW RECORD badge if it's a new high score
+    if (isRecord && score > 0) {
+        newRecordBadge.classList.add('visible');
+        playRecordSound();
+    } else {
+        newRecordBadge.classList.remove('visible');
+    }
 }
 
 function restartGame() {
