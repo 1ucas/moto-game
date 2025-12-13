@@ -1,4 +1,4 @@
-// iFood Delivery Rush - The Game!
+// Food Rush - The Game!
 // A fun Three.js delivery game
 
 // ============= LEADERBOARD SYSTEM =============
@@ -906,7 +906,7 @@ function createMotorcycle() {
     rightLeg.position.x = 0.15;
     motorcycleGroup.add(rightLeg);
 
-    // === IFOOD BAG ===
+    // === DELIVERY BAG ===
     const bagGroup = new THREE.Group();
 
     const bag = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 0.5), redMat);
@@ -918,7 +918,7 @@ function createMotorcycle() {
     lid.position.y = 0.75;
     bagGroup.add(lid);
 
-    // iFood logo (white rectangle)
+    // Logo (white rectangle)
     const logo = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.15), whiteMat);
     logo.position.set(0, 0.4, 0.26);
     bagGroup.add(logo);
@@ -1816,7 +1816,7 @@ function onWindowResize() {
 // ============= ENVIRONMENT EFFECTS =============
 function createSimpleBillboards() {
     const billboardData = [
-        { text: "iFood", color: 0xea1d2c, x: -120, z: -50 },
+        { text: "Dirija com cuidado", color: 0xea1d2c, x: -120, z: -50 },
         { text: "FOME?", color: 0xffcc00, x: 120, z: 50 },
         { text: "PEDALE!", color: 0x00aa00, x: 0, z: -120 },
     ];
