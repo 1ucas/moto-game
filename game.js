@@ -1866,6 +1866,586 @@ function enhanceGame() {
     createSimpleBillboards();
 }
 
+// ============= MULTIPLAYER SYSTEM =============
+
+// Multiplayer state
+let isMultiplayer = false;
+let socket = null;
+let myPlayerId = null;
+let myUuid = null;
+let otherPlayers = {};           // socketId -> { data, mesh }
+let multiplayerServerUrl = null; // Set this when server is available
+
+// LocalStorage keys for multiplayer
+const MP_UUID_KEY = 'foodrush_mp_uuid';
+const MP_USERNAME_KEY = 'foodrush_mp_username';
+
+/**
+ * Get or create player UUID
+ */
+function getPlayerUuid() {
+    let uuid = localStorage.getItem(MP_UUID_KEY);
+    return uuid;
+}
+
+/**
+ * Save player UUID
+ */
+function savePlayerUuid(uuid) {
+    localStorage.setItem(MP_UUID_KEY, uuid);
+}
+
+/**
+ * Get saved username
+ */
+function getPlayerUsername() {
+    return localStorage.getItem(MP_USERNAME_KEY) || 'Entregador';
+}
+
+/**
+ * Save username
+ */
+function savePlayerUsername(username) {
+    localStorage.setItem(MP_USERNAME_KEY, username);
+}
+
+/**
+ * Create a simplified motorcycle mesh for other players
+ */
+function createOtherPlayerMesh(playerData) {
+    const group = new THREE.Group();
+
+    // Use a simpler version for other players (performance)
+    const bodyMat = new THREE.MeshBasicMaterial({ color: 0x4CAF50 }); // Green for other players
+    const blackMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
+
+    // Simple bike body
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 1.8), blackMat);
+    frame.position.y = 0.6;
+    group.add(frame);
+
+    // Rider body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.35), bodyMat);
+    body.position.set(0, 1.5, -0.3);
+    group.add(body);
+
+    // Rider head
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), bodyMat);
+    head.position.set(0, 2, -0.2);
+    group.add(head);
+
+    // Wheels
+    const wheelMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+    const frontWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.2, 8), wheelMat);
+    frontWheel.rotation.z = Math.PI / 2;
+    frontWheel.position.set(0, 0.35, 1);
+    group.add(frontWheel);
+
+    const rearWheel = frontWheel.clone();
+    rearWheel.position.z = -0.8;
+    group.add(rearWheel);
+
+    // Delivery bag (green)
+    const bag = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 0.5), bodyMat);
+    bag.position.set(0, 1.85, -0.7);
+    group.add(bag);
+
+    // Username label (canvas texture)
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, 256, 64);
+    ctx.font = 'bold 32px Arial';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(playerData.username || 'Player', 128, 32);
+
+    const labelTexture = new THREE.CanvasTexture(canvas);
+    const labelMaterial = new THREE.MeshBasicMaterial({
+        map: labelTexture,
+        transparent: true,
+        side: THREE.DoubleSide
+    });
+    const label = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.75), labelMaterial);
+    label.position.set(0, 3.5, 0);
+    group.add(label);
+    group.userData.label = label;
+
+    // Set initial position
+    if (playerData.position) {
+        group.position.set(playerData.position.x, 0, playerData.position.z);
+        group.rotation.y = playerData.position.rotation || 0;
+    }
+
+    return group;
+}
+
+/**
+ * Update other player's position smoothly
+ */
+function updateOtherPlayerPosition(playerId, position) {
+    const player = otherPlayers[playerId];
+    if (!player || !player.mesh) return;
+
+    // Lerp to new position for smooth movement
+    player.targetPosition = {
+        x: position.x,
+        z: position.z,
+        rotation: position.rotation || 0
+    };
+}
+
+/**
+ * Animate other players (called in game loop)
+ */
+function updateOtherPlayers() {
+    if (!isMultiplayer) return;
+
+    Object.values(otherPlayers).forEach(player => {
+        if (!player.mesh || !player.targetPosition) return;
+
+        // Smooth interpolation
+        player.mesh.position.x += (player.targetPosition.x - player.mesh.position.x) * 0.15;
+        player.mesh.position.z += (player.targetPosition.z - player.mesh.position.z) * 0.15;
+
+        // Smooth rotation
+        let rotDiff = player.targetPosition.rotation - player.mesh.rotation.y;
+        // Handle wrap-around
+        if (rotDiff > Math.PI) rotDiff -= Math.PI * 2;
+        if (rotDiff < -Math.PI) rotDiff += Math.PI * 2;
+        player.mesh.rotation.y += rotDiff * 0.15;
+
+        // Make label face camera
+        if (player.mesh.userData.label) {
+            player.mesh.userData.label.lookAt(camera.position);
+        }
+    });
+}
+
+/**
+ * Broadcast player position to server
+ */
+function broadcastPosition() {
+    if (!isMultiplayer || !socket || !motorcycle) return;
+
+    socket.emit('move', {
+        x: motorcycle.position.x,
+        z: motorcycle.position.z,
+        rotation: rotation
+    });
+}
+
+/**
+ * Update online players list UI
+ */
+function updateOnlinePlayersUI() {
+    const countEl = document.getElementById('online-player-count');
+    const listEl = document.getElementById('online-players-list');
+    if (!countEl || !listEl) return;
+
+    const allPlayers = [
+        { id: myPlayerId, username: getPlayerUsername(), money: score, isMe: true },
+        ...Object.values(otherPlayers).map(p => ({
+            id: p.data.id,
+            username: p.data.username,
+            money: p.data.money || 0,
+            isMe: false
+        }))
+    ];
+
+    // Sort by money
+    allPlayers.sort((a, b) => b.money - a.money);
+
+    countEl.textContent = allPlayers.length;
+
+    listEl.innerHTML = allPlayers.map(p => `
+        <div class="online-player-item">
+            <span class="online-player-name ${p.isMe ? 'you' : ''}">${p.username}${p.isMe ? ' (você)' : ''}</span>
+            <span class="online-player-score">R$ ${p.money}</span>
+        </div>
+    `).join('');
+}
+
+/**
+ * Update minimap with other players
+ */
+function updateMinimapMultiplayer() {
+    if (!isMultiplayer) return;
+
+    const minimapScale = 0.35;
+    const minimapSize = 150;
+    const minimapCenter = minimapSize / 2;
+    const minimap = document.getElementById('minimap');
+
+    // Remove old other-player markers
+    document.querySelectorAll('.minimap-marker.other-player').forEach(m => m.remove());
+
+    // Add markers for other players
+    Object.values(otherPlayers).forEach(player => {
+        if (!player.mesh) return;
+
+        const relX = (player.mesh.position.x - motorcycle.position.x) * minimapScale;
+        const relZ = (player.mesh.position.z - motorcycle.position.z) * minimapScale;
+
+        const marker = document.createElement('div');
+        marker.className = 'minimap-marker other-player';
+        marker.style.left = Math.max(5, Math.min(minimapSize - 5, minimapCenter + relX)) + 'px';
+        marker.style.top = Math.max(5, Math.min(minimapSize - 5, minimapCenter + relZ)) + 'px';
+        minimap.appendChild(marker);
+    });
+}
+
+/**
+ * Set connection status UI
+ */
+function setConnectionStatus(status, message) {
+    const el = document.getElementById('connection-status');
+    if (!el) return;
+
+    el.className = 'connection-status ' + status;
+    el.textContent = message || status;
+}
+
+/**
+ * Connect to multiplayer server
+ */
+function connectToMultiplayer() {
+    if (!multiplayerServerUrl) {
+        console.error('Multiplayer server URL not configured');
+        return;
+    }
+
+    setConnectionStatus('connecting', 'Conectando...');
+
+    // Dynamically load socket.io if not already loaded
+    if (typeof io === 'undefined') {
+        const script = document.createElement('script');
+        script.src = multiplayerServerUrl + '/socket.io/socket.io.js';
+        script.onload = () => initSocketConnection();
+        script.onerror = () => {
+            setConnectionStatus('disconnected', 'Erro ao conectar');
+            console.error('Failed to load socket.io');
+        };
+        document.head.appendChild(script);
+    } else {
+        initSocketConnection();
+    }
+}
+
+/**
+ * Initialize socket connection and event handlers
+ */
+function initSocketConnection() {
+    socket = io(multiplayerServerUrl);
+
+    socket.on('connect', () => {
+        setConnectionStatus('connected', 'Conectado');
+
+        // Join the game
+        socket.emit('join', {
+            uuid: getPlayerUuid(),
+            username: getPlayerUsername()
+        });
+    });
+
+    socket.on('disconnect', () => {
+        setConnectionStatus('disconnected', 'Desconectado');
+        isMultiplayer = false;
+
+        // Remove all other players
+        Object.keys(otherPlayers).forEach(id => {
+            if (otherPlayers[id].mesh) {
+                scene.remove(otherPlayers[id].mesh);
+            }
+        });
+        otherPlayers = {};
+    });
+
+    socket.on('error', (error) => {
+        console.error('Socket error:', error);
+        setConnectionStatus('disconnected', 'Erro: ' + error.message);
+    });
+
+    // Game initialization
+    socket.on('init', (data) => {
+        myPlayerId = data.playerId;
+
+        // Save UUID if new
+        if (data.isNewUser || !getPlayerUuid()) {
+            savePlayerUuid(data.uuid);
+        }
+        myUuid = data.uuid;
+
+        // Add existing players
+        data.otherPlayers.forEach(playerData => {
+            addOtherPlayer(playerData);
+        });
+
+        // Show online panel
+        document.getElementById('online-panel').classList.add('visible');
+        updateOnlinePlayersUI();
+
+        isMultiplayer = true;
+        console.log('Multiplayer initialized with', data.otherPlayers.length, 'other players');
+    });
+
+    // New player joined
+    socket.on('player-joined', (playerData) => {
+        addOtherPlayer(playerData);
+        updateOnlinePlayersUI();
+    });
+
+    // Player left
+    socket.on('player-left', (playerId) => {
+        removeOtherPlayer(playerId);
+        updateOnlinePlayersUI();
+    });
+
+    // Player moved
+    socket.on('player-moved', (data) => {
+        updateOtherPlayerPosition(data.id, data);
+    });
+
+    // Player stats updated
+    socket.on('player-stats-updated', (data) => {
+        if (otherPlayers[data.id]) {
+            otherPlayers[data.id].data.money = data.money;
+            otherPlayers[data.id].data.deliveries = data.deliveries;
+        }
+        updateOnlinePlayersUI();
+    });
+
+    // Player updated (hasFood, etc)
+    socket.on('player-updated', (data) => {
+        if (otherPlayers[data.id]) {
+            Object.assign(otherPlayers[data.id].data, data);
+        }
+    });
+
+    // New delivery assigned
+    socket.on('new-delivery', (delivery) => {
+        // Server-assigned delivery (for multiplayer sync)
+        // We still generate locally for now, but this can be used for validation
+        console.log('Server assigned delivery:', delivery);
+    });
+
+    // Pickup success
+    socket.on('pickup-success', (data) => {
+        hasFood = true;
+        playPickupSound();
+        showMessage(currentOrder.restaurantEmoji, "Pedido Coletado!", `De: ${currentOrder.restaurant}`);
+        updateOrdersPanel();
+    });
+
+    // Delivery success
+    socket.on('delivery-success', (data) => {
+        score = data.newTotal;
+        deliveriesCount = data.deliveries;
+        playDeliverySound();
+
+        const messages = [
+            { text: "Entrega Realizada!", emoji: "🎉" },
+            { text: "Boa entrega, motoboy!", emoji: "🔥" },
+            { text: "Cliente feliz!", emoji: "😋" },
+        ];
+        const msg = messages[Math.floor(Math.random() * messages.length)];
+        showMessage(msg.emoji, msg.text, `+R$ ${data.reward},00`);
+
+        hasFood = false;
+        currentOrder = null;
+        generateNewOrder();
+    });
+
+    // Round ended
+    socket.on('round-ended', (data) => {
+        console.log('Round ended:', data);
+    });
+
+    // Leaderboard data
+    socket.on('leaderboard', (data) => {
+        console.log('Leaderboard:', data);
+    });
+}
+
+/**
+ * Add another player to the scene
+ */
+function addOtherPlayer(playerData) {
+    if (otherPlayers[playerData.id]) return;
+
+    const mesh = createOtherPlayerMesh(playerData);
+    scene.add(mesh);
+
+    otherPlayers[playerData.id] = {
+        data: playerData,
+        mesh: mesh,
+        targetPosition: playerData.position || { x: 0, z: 0, rotation: 0 }
+    };
+
+    console.log('Added player:', playerData.username);
+}
+
+/**
+ * Remove another player from the scene
+ */
+function removeOtherPlayer(playerId) {
+    if (!otherPlayers[playerId]) return;
+
+    if (otherPlayers[playerId].mesh) {
+        scene.remove(otherPlayers[playerId].mesh);
+    }
+    delete otherPlayers[playerId];
+
+    console.log('Removed player:', playerId);
+}
+
+/**
+ * Start multiplayer game
+ */
+function startMultiplayerGame() {
+    if (!multiplayerServerUrl) {
+        alert('Servidor multiplayer não disponível ainda!');
+        return;
+    }
+
+    connectToMultiplayer();
+
+    // Wait for connection then start game
+    const checkConnection = setInterval(() => {
+        if (isMultiplayer) {
+            clearInterval(checkConnection);
+            startGame();
+        }
+    }, 100);
+
+    // Timeout after 10 seconds
+    setTimeout(() => {
+        clearInterval(checkConnection);
+        if (!isMultiplayer) {
+            setConnectionStatus('disconnected', 'Tempo esgotado');
+        }
+    }, 10000);
+}
+
+/**
+ * Check if multiplayer server is available and show button
+ */
+function checkMultiplayerAvailability() {
+    if (!multiplayerServerUrl) return;
+
+    fetch(multiplayerServerUrl + '/health')
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                const btn = document.getElementById('multiplayer-btn');
+                const count = document.getElementById('online-count');
+                if (btn) {
+                    btn.style.display = 'inline-block';
+                    if (count && data.players > 0) {
+                        count.textContent = data.players + ' online';
+                    }
+                }
+            }
+        })
+        .catch(() => {
+            // Server not available, keep button hidden
+        });
+}
+
+// ============= MODIFIED GAME FUNCTIONS FOR MULTIPLAYER =============
+
+// Store original functions
+const originalAnimate = animate;
+const originalUpdateMinimap = updateMinimap;
+
+// Override animate to include multiplayer updates
+function animate() {
+    requestAnimationFrame(animate);
+
+    const delta = clock.getDelta();
+
+    if (gameRunning) {
+        updateMotorcycle(delta);
+        updateCamera();
+        updateTrafficCars(delta);
+        updateMarkers(delta);
+        updateClouds(delta);
+        checkCollisions();
+        updateHUD();
+        updateMinimap();
+
+        // Multiplayer updates
+        if (isMultiplayer) {
+            updateOtherPlayers();
+            broadcastPosition();
+            updateMinimapMultiplayer();
+
+            // Update online players UI less frequently
+            if (Math.floor(clock.getElapsedTime() * 2) % 2 === 0) {
+                updateOnlinePlayersUI();
+            }
+        }
+    } else {
+        // Clouds still move on start screen
+        updateClouds(delta);
+        // Gentle camera rotation on start screen
+        const time = clock.getElapsedTime();
+        camera.position.x = Math.sin(time * 0.1) * 30;
+        camera.position.z = Math.cos(time * 0.1) * 30;
+        camera.position.y = 20;
+        camera.lookAt(0, 0, 0);
+    }
+
+    renderer.render(scene, camera);
+}
+
+// Override endGame to handle multiplayer
+const originalEndGame = endGame;
+function endGame() {
+    gameRunning = false;
+    stopEngineSound();
+    document.body.classList.remove('game-active');
+
+    // Notify server if multiplayer
+    if (isMultiplayer && socket) {
+        socket.emit('end-round');
+    }
+
+    // Hide online panel during end screen
+    document.getElementById('online-panel').classList.remove('visible');
+
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('game-over').style.display = 'flex';
+
+    document.getElementById('final-score').textContent = score.toLocaleString('pt-BR');
+    document.getElementById('stat-deliveries').textContent = deliveriesCount;
+    document.getElementById('stat-distance').textContent = (distanceTraveled / 1000).toFixed(1);
+
+    const isRecord = isNewRecord(score);
+    const newRecordBadge = document.getElementById('new-record-badge');
+
+    const rank = addScoreToLeaderboard({
+        score: score,
+        deliveries: deliveriesCount,
+        distance: parseFloat((distanceTraveled / 1000).toFixed(1))
+    });
+
+    if (isRecord && score > 0) {
+        newRecordBadge.classList.add('visible');
+        playRecordSound();
+    } else {
+        newRecordBadge.classList.remove('visible');
+    }
+}
+
 // ============= START =============
 init();
 enhanceGame();
+
+// Check multiplayer availability after init
+// To enable multiplayer, uncomment and set your server URL:
+// multiplayerServerUrl = 'https://your-server.com';
+// checkMultiplayerAvailability();
