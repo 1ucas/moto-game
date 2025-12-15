@@ -2446,6 +2446,5 @@ init();
 enhanceGame();
 
 // Check multiplayer availability after init
-// To enable multiplayer, uncomment and set your server URL:
-// multiplayerServerUrl = 'https://your-server.com';
-// checkMultiplayerAvailability();
+multiplayerServerUrl = 'https://shurato.com.br';
+checkMultiplayerAvailability();
