@@ -1887,15 +1887,18 @@ const MP_NAME_SET_KEY = 'foodrush_name_set';
  * Initialize session with server (gets/creates session cookie)
  */
 async function initializeSession() {
-    if (!multiplayerServerUrl || sessionInitialized) return;
+    if (!multiplayerServerUrl || sessionInitialized) return null;
 
     try {
+        console.log('Initializing session with:', multiplayerServerUrl + '/api/session');
         const response = await fetch(multiplayerServerUrl + '/api/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include', // Important: include cookies
             body: JSON.stringify({ username: getPlayerUsername() })
         });
+
+        console.log('Session response status:', response.status);
 
         if (response.ok) {
             const data = await response.json();
@@ -1909,9 +1912,12 @@ async function initializeSession() {
 
             console.log('Session initialized:', data.isNewUser ? 'new user' : 'existing user');
             return data;
+        } else {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Session API error:', response.status, errorData);
         }
     } catch (error) {
-        console.error('Failed to initialize session:', error);
+        console.error('Failed to initialize session (network/CORS error?):', error);
     }
     return null;
 }

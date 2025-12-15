@@ -255,7 +255,7 @@ function updateUserUsername(userId, username) {
 function setSessionCookie(res, token, expiresAt) {
     res.cookie(SESSION_COOKIE_NAME, token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: true, // Required for SameSite=None
         sameSite: 'none', // Required for cross-site cookies
         expires: expiresAt,
         path: '/'
