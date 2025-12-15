@@ -282,6 +282,9 @@ function init() {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('start-screen').style.display = 'flex';
 
+    // Check if first time user needs to set name
+    checkFirstTimeUser();
+
     // Start render loop
     animate();
 }
@@ -1872,27 +1875,45 @@ function enhanceGame() {
 let isMultiplayer = false;
 let socket = null;
 let myPlayerId = null;
-let myUuid = null;
 let otherPlayers = {};           // socketId -> { data, mesh }
 let multiplayerServerUrl = null; // Set this when server is available
+let sessionInitialized = false;  // Track if session cookie is set
 
 // LocalStorage keys for multiplayer
-const MP_UUID_KEY = 'foodrush_mp_uuid';
 const MP_USERNAME_KEY = 'foodrush_mp_username';
+const MP_NAME_SET_KEY = 'foodrush_name_set';
 
 /**
- * Get or create player UUID
+ * Initialize session with server (gets/creates session cookie)
  */
-function getPlayerUuid() {
-    let uuid = localStorage.getItem(MP_UUID_KEY);
-    return uuid;
-}
+async function initializeSession() {
+    if (!multiplayerServerUrl || sessionInitialized) return;
 
-/**
- * Save player UUID
- */
-function savePlayerUuid(uuid) {
-    localStorage.setItem(MP_UUID_KEY, uuid);
+    try {
+        const response = await fetch(multiplayerServerUrl + '/api/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include', // Important: include cookies
+            body: JSON.stringify({ username: getPlayerUsername() })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            sessionInitialized = true;
+
+            // Sync username from server if different
+            if (data.username && data.username !== getPlayerUsername()) {
+                savePlayerUsername(data.username);
+                updateNameDisplay();
+            }
+
+            console.log('Session initialized:', data.isNewUser ? 'new user' : 'existing user');
+            return data;
+        }
+    } catch (error) {
+        console.error('Failed to initialize session:', error);
+    }
+    return null;
 }
 
 /**
@@ -1907,6 +1928,100 @@ function getPlayerUsername() {
  */
 function savePlayerUsername(username) {
     localStorage.setItem(MP_USERNAME_KEY, username);
+}
+
+/**
+ * Check if user has ever set their name
+ */
+function hasUserSetName() {
+    return localStorage.getItem(MP_NAME_SET_KEY) === 'true';
+}
+
+/**
+ * Mark that user has set their name
+ */
+function markNameAsSet() {
+    localStorage.setItem(MP_NAME_SET_KEY, 'true');
+}
+
+/**
+ * Open the name input modal
+ */
+function openNameModal() {
+    const modal = document.getElementById('name-modal');
+    const input = document.getElementById('name-input');
+    input.value = getPlayerUsername();
+    modal.style.display = 'flex';
+    input.focus();
+    input.select();
+}
+
+/**
+ * Close the name modal
+ */
+function closeNameModal() {
+    document.getElementById('name-modal').style.display = 'none';
+}
+
+/**
+ * Save name and close modal
+ */
+async function saveNameAndClose() {
+    const input = document.getElementById('name-input');
+    let name = input.value.trim();
+
+    if (!name) {
+        name = 'Entregador';
+    }
+
+    savePlayerUsername(name);
+    markNameAsSet();
+    updateNameDisplay();
+    closeNameModal();
+
+    // Sync username with server if session exists
+    if (multiplayerServerUrl && sessionInitialized) {
+        try {
+            await fetch(multiplayerServerUrl + '/api/session/username', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ username: name })
+            });
+        } catch (error) {
+            console.error('Failed to sync username:', error);
+        }
+    }
+}
+
+/**
+ * Update name display on start screen
+ */
+function updateNameDisplay() {
+    const display = document.getElementById('current-name-display');
+    if (display) {
+        display.textContent = getPlayerUsername();
+    }
+}
+
+/**
+ * Check and prompt for name if new user
+ */
+function checkFirstTimeUser() {
+    // Setup enter key handler for name input
+    const nameInput = document.getElementById('name-input');
+    if (nameInput) {
+        nameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                saveNameAndClose();
+            }
+        });
+    }
+
+    if (!hasUserSetName()) {
+        openNameModal();
+    }
+    updateNameDisplay();
 }
 
 /**
@@ -2112,13 +2227,20 @@ function setConnectionStatus(status, message) {
 /**
  * Connect to multiplayer server
  */
-function connectToMultiplayer() {
+async function connectToMultiplayer() {
     if (!multiplayerServerUrl) {
         console.error('Multiplayer server URL not configured');
         return;
     }
 
     setConnectionStatus('connecting', 'Conectando...');
+
+    // Initialize session first (creates session cookie if needed)
+    const session = await initializeSession();
+    if (!session) {
+        setConnectionStatus('disconnected', 'Erro ao criar sessão');
+        return;
+    }
 
     // Dynamically load socket.io if not already loaded
     if (typeof io === 'undefined') {
@@ -2139,14 +2261,15 @@ function connectToMultiplayer() {
  * Initialize socket connection and event handlers
  */
 function initSocketConnection() {
-    socket = io(multiplayerServerUrl);
+    socket = io(multiplayerServerUrl, {
+        withCredentials: true // Send cookies with socket.io connection
+    });
 
     socket.on('connect', () => {
         setConnectionStatus('connected', 'Conectado');
 
-        // Join the game
+        // Join the game (session validated via cookie on server)
         socket.emit('join', {
-            uuid: getPlayerUuid(),
             username: getPlayerUsername()
         });
     });
@@ -2172,12 +2295,6 @@ function initSocketConnection() {
     // Game initialization
     socket.on('init', (data) => {
         myPlayerId = data.playerId;
-
-        // Save UUID if new
-        if (data.isNewUser || !getPlayerUuid()) {
-            savePlayerUuid(data.uuid);
-        }
-        myUuid = data.uuid;
 
         // Add existing players
         data.otherPlayers.forEach(playerData => {

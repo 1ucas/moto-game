@@ -13,7 +13,9 @@ const http = require('http');
 const { Server } = require('socket.io');
 const sqlite3 = require('sqlite3').verbose();
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 
 // ============================================================
@@ -22,6 +24,12 @@ const path = require('path');
 
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'game.db');
+const COOKIE_SECRET = process.env.COOKIE_SECRET || 'foodrush-secret-change-in-production';
+const SESSION_COOKIE_NAME = 'foodrush_session';
+const SESSION_EXPIRY_YEARS = 5;
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['http://localhost:3000', 'http://localhost:5500', 'http://127.0.0.1:5500', 'https://shurato.com.br', 'https://www.shurato.com.br'];
 
 // Game configuration (matches client CONFIG)
 const CONFIG = {
@@ -59,14 +67,32 @@ const CUSTOMERS = [
 // ============================================================
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: function(origin, callback) {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        // Check if origin is in allowed list or matches GitHub Pages pattern
+        if (ALLOWED_ORIGINS.includes(origin) || origin.includes('github.io')) {
+            return callback(null, true);
+        }
+        callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser(COOKIE_SECRET));
 
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: '*',
-        methods: ['GET', 'POST']
+        origin: function(origin, callback) {
+            if (!origin) return callback(null, true);
+            if (ALLOWED_ORIGINS.includes(origin) || origin.includes('github.io')) {
+                return callback(null, true);
+            }
+            callback(new Error('Not allowed by CORS'));
+        },
+        credentials: true
     }
 });
 
@@ -128,6 +154,114 @@ function sanitizePlayer(player) {
     };
 }
 
+// ============================================================
+// SESSION MANAGEMENT
+// ============================================================
+
+/**
+ * Generate a secure random session token
+ */
+function generateSessionToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
+
+/**
+ * Get session expiry date (5 years from now)
+ */
+function getSessionExpiry() {
+    const expiry = new Date();
+    expiry.setFullYear(expiry.getFullYear() + SESSION_EXPIRY_YEARS);
+    return expiry.toISOString();
+}
+
+/**
+ * Create a new user and auth session
+ */
+function createUserWithSession(username) {
+    return new Promise((resolve, reject) => {
+        const uuid = uuidv4();
+        const token = generateSessionToken();
+        const expiresAt = getSessionExpiry();
+
+        db.serialize(() => {
+            // Create user
+            db.run(
+                'INSERT INTO users (uuid, username) VALUES (?, ?)',
+                [uuid, username],
+                function(err) {
+                    if (err) return reject(err);
+
+                    const userId = this.lastID;
+
+                    // Create auth session
+                    db.run(
+                        'INSERT INTO auth_sessions (token, user_id, expires_at) VALUES (?, ?, ?)',
+                        [token, userId, expiresAt],
+                        function(err) {
+                            if (err) return reject(err);
+
+                            resolve({
+                                token,
+                                userId,
+                                username,
+                                expiresAt: new Date(expiresAt)
+                            });
+                        }
+                    );
+                }
+            );
+        });
+    });
+}
+
+/**
+ * Get user by session token (validates expiry)
+ */
+function getUserBySessionToken(token) {
+    return new Promise((resolve, reject) => {
+        db.get(
+            `SELECT u.*, a.expires_at
+             FROM auth_sessions a
+             JOIN users u ON a.user_id = u.id
+             WHERE a.token = ? AND a.expires_at > datetime('now')`,
+            [token],
+            (err, row) => {
+                if (err) return reject(err);
+                resolve(row || null);
+            }
+        );
+    });
+}
+
+/**
+ * Update username for a user
+ */
+function updateUserUsername(userId, username) {
+    return new Promise((resolve, reject) => {
+        db.run(
+            'UPDATE users SET username = ? WHERE id = ?',
+            [username, userId],
+            (err) => {
+                if (err) return reject(err);
+                resolve();
+            }
+        );
+    });
+}
+
+/**
+ * Set session cookie on response
+ */
+function setSessionCookie(res, token, expiresAt) {
+    res.cookie(SESSION_COOKIE_NAME, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none', // Required for cross-site cookies
+        expires: expiresAt,
+        path: '/'
+    });
+}
+
 /**
  * Assign a new delivery to a player
  */
@@ -177,45 +311,6 @@ function getOtherPlayers(excludeSocketId) {
 // ============================================================
 // DATABASE FUNCTIONS
 // ============================================================
-
-function getUserByUuid(uuid) {
-    return new Promise((resolve, reject) => {
-        db.get('SELECT * FROM users WHERE uuid = ?', [uuid], (err, row) => {
-            if (err) reject(err);
-            else resolve(row);
-        });
-    });
-}
-
-function createUser(uuid, username) {
-    return new Promise((resolve, reject) => {
-        db.run(
-            'INSERT INTO users (uuid, username) VALUES (?, ?)',
-            [uuid, username],
-            function(err) {
-                if (err) return reject(err);
-                const userId = this.lastID;
-                db.get('SELECT * FROM users WHERE id = ?', [userId], (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row);
-                });
-            }
-        );
-    });
-}
-
-function updateUsername(userId, username) {
-    return new Promise((resolve, reject) => {
-        db.run(
-            'UPDATE users SET username = ? WHERE id = ?',
-            [username, userId],
-            (err) => {
-                if (err) reject(err);
-                else resolve();
-            }
-        );
-    });
-}
 
 function createSession(userId) {
     return new Promise((resolve, reject) => {
@@ -298,36 +393,45 @@ io.on('connection', (socket) => {
     // ----------------------------------------------------------
     // JOIN GAME
     // ----------------------------------------------------------
-    socket.on('join', async ({ uuid, username }) => {
+    socket.on('join', async ({ username }) => {
         try {
-            let user;
-            let isNewUser = false;
+            // Parse session token from socket handshake cookies
+            const cookieHeader = socket.handshake.headers.cookie || '';
+            const cookies = {};
+            cookieHeader.split(';').forEach(cookie => {
+                const [name, value] = cookie.trim().split('=');
+                if (name && value) cookies[name] = value;
+            });
 
-            // Try to find existing user by UUID
-            if (uuid) {
-                user = await getUserByUuid(uuid);
+            const sessionToken = cookies[SESSION_COOKIE_NAME];
+
+            if (!sessionToken) {
+                socket.emit('error', { message: 'No session. Please refresh the page.' });
+                return;
             }
 
-            // Create new user if not found
+            // Validate session and get user
+            const user = await getUserBySessionToken(sessionToken);
+
             if (!user) {
-                const newUuid = uuidv4();
-                user = await createUser(newUuid, username || 'Entregador');
-                isNewUser = true;
-            } else if (username && username !== user.username) {
-                // Update username if changed
-                await updateUsername(user.id, username);
+                socket.emit('error', { message: 'Invalid or expired session. Please refresh the page.' });
+                return;
+            }
+
+            // Update username if provided and different
+            if (username && username !== user.username) {
+                await updateUserUsername(user.id, username);
                 user.username = username;
             }
 
-            // Create new session
-            const sessionId = await createSession(user.id);
+            // Create game session (for tracking this play session's stats)
+            const gameSessionId = await createSession(user.id);
 
             // Initialize player state
             activePlayers[socket.id] = {
                 id: socket.id,
-                oderId: user.id,
-                sessionId: sessionId,
-                uuid: user.uuid,
+                userId: user.id,
+                sessionId: gameSessionId,
                 username: user.username,
                 position: { x: 0, z: 0, rotation: 0 },
                 money: 0,
@@ -345,11 +449,9 @@ io.on('connection', (socket) => {
             // Assign first delivery
             assignNewDelivery(socket.id);
 
-            // Send initialization data
+            // Send initialization data (no UUID sent to client)
             socket.emit('init', {
                 playerId: socket.id,
-                uuid: user.uuid,
-                isNewUser: isNewUser,
                 player: sanitizePlayer(activePlayers[socket.id]),
                 currentDelivery: activePlayers[socket.id].currentDelivery,
                 otherPlayers: getOtherPlayers(socket.id),
@@ -628,6 +730,77 @@ app.get('/api/leaderboard', async (req, res) => {
         res.json(leaderboard);
     } catch (error) {
         res.status(500).json({ error: 'Failed to get leaderboard' });
+    }
+});
+
+// Session management - get or create session
+app.post('/api/session', async (req, res) => {
+    try {
+        const { username } = req.body;
+        const sessionToken = req.cookies[SESSION_COOKIE_NAME];
+
+        // Try to get existing user from session
+        if (sessionToken) {
+            const user = await getUserBySessionToken(sessionToken);
+            if (user) {
+                // Update username if provided and different
+                if (username && username !== user.username) {
+                    await updateUserUsername(user.id, username);
+                    user.username = username;
+                }
+
+                return res.json({
+                    isNewUser: false,
+                    username: user.username,
+                    totalEarnings: user.total_earnings || 0,
+                    totalDeliveries: user.total_deliveries || 0,
+                    bestScore: user.best_session_score || 0
+                });
+            }
+        }
+
+        // Create new user and session
+        const session = await createUserWithSession(username || 'Entregador');
+        setSessionCookie(res, session.token, session.expiresAt);
+
+        res.json({
+            isNewUser: true,
+            username: session.username,
+            totalEarnings: 0,
+            totalDeliveries: 0,
+            bestScore: 0
+        });
+
+    } catch (error) {
+        console.error('Session error:', error);
+        res.status(500).json({ error: 'Failed to manage session' });
+    }
+});
+
+// Update username
+app.post('/api/session/username', async (req, res) => {
+    try {
+        const { username } = req.body;
+        const sessionToken = req.cookies[SESSION_COOKIE_NAME];
+
+        if (!sessionToken) {
+            return res.status(401).json({ error: 'No session' });
+        }
+
+        const user = await getUserBySessionToken(sessionToken);
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid session' });
+        }
+
+        if (username && username.trim()) {
+            await updateUserUsername(user.id, username.trim());
+        }
+
+        res.json({ success: true, username: username.trim() });
+
+    } catch (error) {
+        console.error('Username update error:', error);
+        res.status(500).json({ error: 'Failed to update username' });
     }
 });
 

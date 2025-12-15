@@ -77,6 +77,29 @@ db.serialize(() => {
         if (err) console.error('Error creating user sessions index:', err);
         else console.log('User sessions index ready');
     });
+
+    // Auth sessions table - maps session tokens to users
+    db.run(`
+        CREATE TABLE IF NOT EXISTS auth_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            token VARCHAR(64) UNIQUE NOT NULL,
+            user_id INTEGER NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `, (err) => {
+        if (err) console.error('Error creating auth_sessions table:', err);
+        else console.log('Auth sessions table ready');
+    });
+
+    // Create index for faster token lookups
+    db.run(`
+        CREATE INDEX IF NOT EXISTS idx_auth_sessions_token ON auth_sessions(token)
+    `, (err) => {
+        if (err) console.error('Error creating auth token index:', err);
+        else console.log('Auth token index ready');
+    });
 });
 
 db.close((err) => {

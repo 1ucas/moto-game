@@ -1208,6 +1208,116 @@
             border: 1px solid #EF9A9A;
         }
 
+        /* ============= NAME INPUT MODAL ============= */
+        .name-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .name-modal {
+            background: linear-gradient(180deg, #ffffff 0%, #f5f5f5 100%);
+            border: 4px solid var(--ifood-red);
+            border-radius: 25px;
+            padding: 30px 40px;
+            text-align: center;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+            animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 90%;
+            width: 350px;
+        }
+
+        .name-modal-title {
+            font-family: 'Bangers', cursive;
+            font-size: 1.8rem;
+            color: var(--ifood-red);
+            margin-bottom: 1.5rem;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            outline: none;
+            text-align: center;
+            transition: border-color 0.2s ease;
+        }
+
+        .name-input:focus {
+            border-color: var(--ifood-red);
+        }
+
+        .name-hint {
+            font-size: 0.8rem;
+            color: #888;
+            margin: 8px 0 20px;
+        }
+
+        .name-save-btn {
+            padding: 12px 40px;
+            font-family: 'Bangers', cursive;
+            font-size: 1.3rem;
+            color: white;
+            background: linear-gradient(180deg, var(--ifood-red) 0%, var(--ifood-red-dark) 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #8a1018, 0 6px 15px rgba(0,0,0,0.3);
+            transition: all 0.15s ease;
+        }
+
+        .name-save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #8a1018, 0 10px 20px rgba(0,0,0,0.4);
+        }
+
+        .name-save-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #8a1018, 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .name-save-btn:disabled {
+            background: #ccc;
+            box-shadow: 0 4px 0 #999;
+            cursor: not-allowed;
+        }
+
+        /* Change name button on start screen */
+        .change-name-btn {
+            position: relative;
+            z-index: 2;
+            margin-top: 1.5rem;
+            padding: 0.5rem 1.5rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: rgba(0, 60, 100, 0.7);
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid rgba(0, 60, 100, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            animation: fadeIn 1s ease-out 1s both;
+        }
+
+        .change-name-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--ifood-red);
+            color: var(--ifood-red);
+        }
+
         /* Mobile adjustments for multiplayer */
         @media (max-width: 768px), (pointer: coarse) {
             .online-panel {
@@ -1278,6 +1388,11 @@
             <button class="multiplayer-btn" id="multiplayer-btn" onclick="startMultiplayerGame()" style="display: none;">
                 🌐 Jogar Online
                 <span class="online-count" id="online-count"></span>
+            </button>
+
+            <!-- Change Name Button -->
+            <button class="change-name-btn" id="change-name-btn" onclick="openNameModal()">
+                ✏️ <span id="current-name-display">Entregador</span>
             </button>
         </div>
 
@@ -1371,8 +1486,17 @@
     <!-- Connection Status Indicator -->
     <div class="connection-status" id="connection-status"></div>
 
-    <!-- Online Players Panel (shown during multiplayer) -->
-    <div class="online-panel" id="online-panel">
+    <!-- Name Input Modal -->
+    <div class="name-modal-overlay" id="name-modal" style="display: none;">
+        <div class="name-modal">
+            <h2 class="name-modal-title">Como você quer ser chamado?</h2>
+            <input type="text" id="name-input" class="name-input" maxlength="15" placeholder="Seu nome">
+            <p class="name-hint">Máximo 15 caracteres</p>
+            <button class="name-save-btn" id="name-save-btn" onclick="saveNameAndClose()">CONFIRMAR</button>
+        </div>
+    </div>
+
+    <!-- Online Players Panel (shown during multiplayer) --><div class="online-panel" id="online-panel">
         <div class="online-panel-title">
             <span class="online-dot"></span>
             Online (<span id="online-player-count">0</span>)
