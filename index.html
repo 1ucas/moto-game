@@ -755,10 +755,10 @@
                 font-size: 0.6rem;
             }
 
-            /* Repositioned and smaller orders panel on mobile */
+            /* Repositioned and smaller orders panel on mobile - top right */
             .orders-panel {
-                top: auto;
-                bottom: 220px;
+                top: 80px;
+                bottom: auto;
                 right: 10px;
                 transform: none;
                 max-width: 140px;
@@ -1322,10 +1322,10 @@
         @media (max-width: 768px), (pointer: coarse) {
             .online-panel {
                 left: 10px;
-                top: auto;
-                bottom: 220px;
+                top: 80px;
+                bottom: auto;
                 transform: none;
-                max-width: 120px;
+                max-width: 150px;
                 padding: 8px 10px;
             }
 
@@ -1334,9 +1334,19 @@
                 padding: 4px 0;
             }
 
+            .online-player-name {
+                max-width: 100px;
+            }
+
             .multiplayer-btn {
                 font-size: 0.95rem;
                 padding: 0.6rem 2rem;
+            }
+
+            .connection-status {
+                top: auto;
+                bottom: 230px;
+                right: 10px;
             }
         }
     </style>
