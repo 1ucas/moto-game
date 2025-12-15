@@ -2457,6 +2457,8 @@ function startMultiplayerGame() {
  * Check if multiplayer server is available and show button
  */
 function checkMultiplayerAvailability() {
+    // Only show multiplayer on shurato.com.br (third-party cookies blocked elsewhere)
+    if (!window.location.hostname.includes('shurato.com.br')) return;
     if (!multiplayerServerUrl) return;
 
     fetch(multiplayerServerUrl + '/health')
@@ -2569,5 +2571,8 @@ init();
 enhanceGame();
 
 // Check multiplayer availability after init
-multiplayerServerUrl = 'https://shurato.com.br';
-checkMultiplayerAvailability();
+// Multiplayer only works when served from shurato.com.br (same-origin cookies)
+if (window.location.hostname.includes('shurato.com.br')) {
+    multiplayerServerUrl = window.location.origin;
+    checkMultiplayerAvailability();
+}

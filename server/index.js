@@ -82,6 +82,9 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser(COOKIE_SECRET));
 
+// Serve static frontend files (makes cookies first-party)
+app.use(express.static(path.join(__dirname, '..')));
+
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
