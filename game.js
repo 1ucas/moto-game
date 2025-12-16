@@ -1584,7 +1584,7 @@ function updateMinimap() {
                 const marker = document.createElement('div');
                 marker.className = 'minimap-marker restaurant';
                 marker.style.left = Math.max(5, Math.min(minimapSize - 5, minimapCenter + relX)) + 'px';
-                marker.style.top = Math.max(5, Math.min(minimapSize - 5, minimapCenter + relZ)) + 'px';
+                marker.style.top = Math.max(5, Math.min(minimapSize - 5, minimapCenter - relZ)) + 'px';
                 minimap.appendChild(marker);
             }
         }
@@ -1602,7 +1602,7 @@ function updateMinimap() {
             marker.className = 'minimap-marker customer';
             // Keep marker visible at edge if off-screen
             marker.style.left = Math.max(5, Math.min(minimapSize - 5, minimapCenter + relX)) + 'px';
-            marker.style.top = Math.max(5, Math.min(minimapSize - 5, minimapCenter + relZ)) + 'px';
+            marker.style.top = Math.max(5, Math.min(minimapSize - 5, minimapCenter - relZ)) + 'px';
             minimap.appendChild(marker);
         }
     }
@@ -2285,7 +2285,7 @@ function updateMinimapMultiplayer() {
         const marker = document.createElement('div');
         marker.className = 'minimap-marker other-player';
         marker.style.left = Math.max(5, Math.min(minimapSize - 5, minimapCenter + relX)) + 'px';
-        marker.style.top = Math.max(5, Math.min(minimapSize - 5, minimapCenter + relZ)) + 'px';
+        marker.style.top = Math.max(5, Math.min(minimapSize - 5, minimapCenter - relZ)) + 'px';
         minimap.appendChild(marker);
     });
 }
