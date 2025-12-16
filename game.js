@@ -1556,8 +1556,8 @@ function updateMinimap() {
     existingMarkers.forEach(m => m.remove());
 
     // Get motorcycle rotation for rotating the minimap view
-    // Negate angle so minimap rotates WITH the player (forward = up)
-    const motoAngle = motorcycle ? -motorcycle.rotation.y : 0;
+    // Use the rotation angle to transform world coordinates to heading-relative coordinates
+    const motoAngle = motorcycle ? motorcycle.rotation.y : 0;
     const cos = Math.cos(motoAngle);
     const sin = Math.sin(motoAngle);
 
@@ -2264,8 +2264,8 @@ function updateMinimapMultiplayer() {
     const minimapCenter = minimapSize / 2;
 
     // Get motorcycle rotation for rotating the minimap view
-    // Negate angle so minimap rotates WITH the player (forward = up)
-    const motoAngle = motorcycle ? -motorcycle.rotation.y : 0;
+    // Use the rotation angle to transform world coordinates to heading-relative coordinates
+    const motoAngle = motorcycle ? motorcycle.rotation.y : 0;
     const cos = Math.cos(motoAngle);
     const sin = Math.sin(motoAngle);
 
