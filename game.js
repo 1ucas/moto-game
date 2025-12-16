@@ -1756,6 +1756,11 @@ function startGame() {
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('hud').style.display = 'block';
 
+    // Show online panel if in multiplayer mode
+    if (isMultiplayer) {
+        document.getElementById('online-panel').classList.add('visible');
+    }
+
     // Hide cursor during gameplay
     document.body.classList.add('game-active');
 
