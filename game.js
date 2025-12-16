@@ -1756,6 +1756,11 @@ function startGame() {
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('hud').style.display = 'block';
 
+    // Show online panel if in multiplayer mode
+    if (isMultiplayer) {
+        document.getElementById('online-panel').classList.add('visible');
+    }
+
     // Hide cursor during gameplay
     document.body.classList.add('game-active');
 
@@ -1775,8 +1780,13 @@ function startGame() {
     motorcycle.position.set(0, 0, 0);
     motorcycle.rotation.set(0, 0, 0);
 
-    // Generate first order
-    generateNewOrder();
+    // Generate first order (only in single-player or if not already set by server)
+    if (!isMultiplayer || !currentOrder) {
+        generateNewOrder();
+    } else {
+        // In multiplayer with existing order, just update the UI
+        updateOrdersPanel();
+    }
 
     gameRunning = true;
 
@@ -2378,6 +2388,16 @@ function initSocketConnection() {
             addOtherPlayer(playerData);
         });
 
+        // Set current delivery from server
+        if (data.currentDelivery) {
+            currentOrder = {
+                restaurant: data.currentDelivery.restaurant.name,
+                restaurantEmoji: data.currentDelivery.restaurant.emoji,
+                customer: data.currentDelivery.customer.name,
+                customerEmoji: data.currentDelivery.customer.emoji
+            };
+        }
+
         // Show online panel and setup toggle
         document.getElementById('online-panel').classList.add('visible');
         setupOnlinePanelToggle();
@@ -2465,8 +2485,10 @@ function initSocketConnection() {
         // Update delivery from server
         if (data.currentDelivery) {
             currentOrder = {
-                restaurant: data.currentDelivery.restaurant,
-                customer: data.currentDelivery.customer
+                restaurant: data.currentDelivery.restaurant.name,
+                restaurantEmoji: data.currentDelivery.restaurant.emoji,
+                customer: data.currentDelivery.customer.name,
+                customerEmoji: data.currentDelivery.customer.emoji
             };
             hasFood = false;
             updateOrdersPanel();
