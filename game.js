@@ -179,7 +179,7 @@ function initJoystickPosition() {
 
 // ============= GAME CONFIG =============
 const CONFIG = {
-    GAME_TIME: 180, // 3 minutes
+    GAME_TIME: 300, // 5 minutes
     CITY_SIZE: 400,
     BUILDING_COUNT: 40,
     CAR_COUNT: 8,
@@ -1556,7 +1556,8 @@ function updateMinimap() {
     existingMarkers.forEach(m => m.remove());
 
     // Get motorcycle rotation for rotating the minimap view
-    const motoAngle = motorcycle ? motorcycle.rotation.y : 0;
+    // Negate angle so minimap rotates WITH the player (forward = up)
+    const motoAngle = motorcycle ? -motorcycle.rotation.y : 0;
     const cos = Math.cos(motoAngle);
     const sin = Math.sin(motoAngle);
 
@@ -2198,6 +2199,26 @@ function broadcastPosition() {
 }
 
 /**
+ * Toggle online panel expanded state
+ */
+function toggleOnlinePanel() {
+    const panel = document.getElementById('online-panel');
+    if (panel) {
+        panel.classList.toggle('expanded');
+    }
+}
+
+/**
+ * Setup online panel click handler
+ */
+function setupOnlinePanelToggle() {
+    const panel = document.getElementById('online-panel');
+    if (panel) {
+        panel.addEventListener('click', toggleOnlinePanel);
+    }
+}
+
+/**
  * Update online players list UI
  */
 function updateOnlinePlayersUI() {
@@ -2243,7 +2264,8 @@ function updateMinimapMultiplayer() {
     const minimapCenter = minimapSize / 2;
 
     // Get motorcycle rotation for rotating the minimap view
-    const motoAngle = motorcycle ? motorcycle.rotation.y : 0;
+    // Negate angle so minimap rotates WITH the player (forward = up)
+    const motoAngle = motorcycle ? -motorcycle.rotation.y : 0;
     const cos = Math.cos(motoAngle);
     const sin = Math.sin(motoAngle);
 
@@ -2356,8 +2378,9 @@ function initSocketConnection() {
             addOtherPlayer(playerData);
         });
 
-        // Show online panel
+        // Show online panel and setup toggle
         document.getElementById('online-panel').classList.add('visible');
+        setupOnlinePanelToggle();
         updateOnlinePlayersUI();
 
         isMultiplayer = true;

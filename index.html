@@ -1121,15 +1121,22 @@
             border: 3px solid #4CAF50;
             border-radius: 15px;
             padding: 12px 15px;
-            min-width: 180px;
-            max-height: 300px;
-            overflow-y: auto;
+            min-width: 60px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             display: none;
+            cursor: pointer;
+            transition: min-width 0.2s ease;
+            pointer-events: auto;
         }
 
         .online-panel.visible {
             display: block;
+        }
+
+        .online-panel.expanded {
+            min-width: 180px;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         .online-panel-title {
@@ -1137,7 +1144,6 @@
             text-transform: uppercase;
             letter-spacing: 0.15em;
             color: #4CAF50;
-            margin-bottom: 8px;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -1163,6 +1169,15 @@
 
         .online-player-item:last-child {
             border-bottom: none;
+        }
+
+        /* Hide players list when collapsed */
+        .online-panel:not(.expanded) #online-players-list {
+            display: none;
+        }
+
+        .online-panel:not(.expanded) .online-panel-title {
+            margin-bottom: 0;
         }
 
         .online-player-name {
@@ -1494,7 +1509,7 @@
                 <table class="leaderboard-table">
                     <thead>
                         <tr>
-                            <th>Posição</th>
+                            <th>#</th>
                             <th>Nome</th>
                             <th>Dinheiro</th>
                             <th>Entregas</th>
