@@ -1807,6 +1807,12 @@ function endGame() {
 
 function restartGame() {
     document.getElementById('game-over').style.display = 'none';
+
+    // If in multiplayer and still connected, emit start-round to server
+    if (isMultiplayer && socket && socket.connected) {
+        socket.emit('start-round');
+    }
+
     startGame();
 }
 
@@ -2385,6 +2391,20 @@ function initSocketConnection() {
     // Round ended
     socket.on('round-ended', (data) => {
         console.log('Round ended:', data);
+    });
+
+    // New round started (after restart)
+    socket.on('round-started', (data) => {
+        console.log('New round started:', data);
+        // Update delivery from server
+        if (data.currentDelivery) {
+            currentOrder = {
+                restaurant: data.currentDelivery.restaurant,
+                customer: data.currentDelivery.customer
+            };
+            hasFood = false;
+            updateOrdersPanel();
+        }
     });
 
     // Leaderboard data
