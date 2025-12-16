@@ -30,6 +30,7 @@ function saveLeaderboard(leaderboard) {
 function addScoreToLeaderboard(scoreData) {
     const leaderboard = getLeaderboard();
     const entry = {
+        name: getPlayerUsername(),
         score: scoreData.score,
         deliveries: scoreData.deliveries,
         distance: scoreData.distance,
@@ -77,15 +78,17 @@ function showLeaderboard() {
     leaderboardBody.innerHTML = '';
 
     if (leaderboard.length === 0) {
-        leaderboardBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">Nenhum recorde ainda! Jogue para aparecer aqui.</td></tr>';
+        leaderboardBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">Nenhum recorde ainda! Jogue para aparecer aqui.</td></tr>';
     } else {
         leaderboard.forEach((entry, index) => {
             const row = document.createElement('tr');
             const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
             const positionText = rankEmoji ? rankEmoji : `#${index + 1}`;
             const isCurrentEntry = lastAddedEntryDate && entry.date === lastAddedEntryDate;
+            const playerName = entry.name || 'Entregador';
             row.innerHTML = `
                 <td class="rank-cell">${positionText}</td>
+                <td class="name-cell">${playerName}</td>
                 <td class="score-cell">R$ ${entry.score.toLocaleString('pt-BR')}</td>
                 <td>${entry.deliveries}</td>
                 <td class="date-cell">${formatLeaderboardDate(entry.date)}${isCurrentEntry ? ' ←' : ''}</td>
@@ -277,6 +280,14 @@ function init() {
 
     // Initialize joystick position preference
     initJoystickPosition();
+
+    // Hide keyboard instructions on mobile devices
+    if (isMobileDevice()) {
+        const instructions = document.querySelector('.instructions');
+        if (instructions) {
+            instructions.style.display = 'none';
+        }
+    }
 
     // Hide loading, show start
     document.getElementById('loading').style.display = 'none';
@@ -1532,15 +1543,30 @@ function updateHUD() {
 }
 
 function updateMinimap() {
-    const minimapScale = 0.35;
-    const minimapSize = 150;
+    const minimap = document.getElementById('minimap');
+    if (!minimap) return;
+
+    // Get actual minimap size (responsive for mobile)
+    const minimapSize = minimap.offsetWidth || 150;
+    const minimapScale = minimapSize / 400; // Adjusted scale based on size
     const minimapCenter = minimapSize / 2;
 
     // Update markers on minimap
     const existingMarkers = document.querySelectorAll('.minimap-marker');
     existingMarkers.forEach(m => m.remove());
 
-    const minimap = document.getElementById('minimap');
+    // Get motorcycle rotation for rotating the minimap view
+    const motoAngle = motorcycle ? motorcycle.rotation.y : 0;
+    const cos = Math.cos(motoAngle);
+    const sin = Math.sin(motoAngle);
+
+    // Helper function to rotate a point around the center based on motorcycle heading
+    function rotatePoint(dx, dz) {
+        // Rotate the relative position so that "forward" is always up on the minimap
+        const rotatedX = dx * cos - dz * sin;
+        const rotatedZ = dx * sin + dz * cos;
+        return { x: rotatedX, z: rotatedZ };
+    }
 
     // Only show current order markers (pickup and delivery)
     if (currentOrder) {
@@ -1548,8 +1574,11 @@ function updateMinimap() {
         if (!hasFood) {
             const restaurant = restaurants.find(r => r.userData.name === currentOrder.restaurant);
             if (restaurant) {
-                const relX = (restaurant.position.x - motorcycle.position.x) * minimapScale;
-                const relZ = (restaurant.position.z - motorcycle.position.z) * minimapScale;
+                const dx = (restaurant.position.x - motorcycle.position.x);
+                const dz = (restaurant.position.z - motorcycle.position.z);
+                const rotated = rotatePoint(dx, dz);
+                const relX = rotated.x * minimapScale;
+                const relZ = rotated.z * minimapScale;
 
                 const marker = document.createElement('div');
                 marker.className = 'minimap-marker restaurant';
@@ -1562,8 +1591,11 @@ function updateMinimap() {
         // Always show delivery location (customer)
         const customer = customers.find(c => c.userData.name === currentOrder.customer);
         if (customer) {
-            const relX = (customer.position.x - motorcycle.position.x) * minimapScale;
-            const relZ = (customer.position.z - motorcycle.position.z) * minimapScale;
+            const dx = (customer.position.x - motorcycle.position.x);
+            const dz = (customer.position.z - motorcycle.position.z);
+            const rotated = rotatePoint(dx, dz);
+            const relX = rotated.x * minimapScale;
+            const relZ = rotated.z * minimapScale;
 
             const marker = document.createElement('div');
             marker.className = 'minimap-marker customer';
@@ -2202,10 +2234,18 @@ function updateOnlinePlayersUI() {
 function updateMinimapMultiplayer() {
     if (!isMultiplayer) return;
 
-    const minimapScale = 0.35;
-    const minimapSize = 150;
-    const minimapCenter = minimapSize / 2;
     const minimap = document.getElementById('minimap');
+    if (!minimap) return;
+
+    // Get actual minimap size (responsive for mobile)
+    const minimapSize = minimap.offsetWidth || 150;
+    const minimapScale = minimapSize / 400;
+    const minimapCenter = minimapSize / 2;
+
+    // Get motorcycle rotation for rotating the minimap view
+    const motoAngle = motorcycle ? motorcycle.rotation.y : 0;
+    const cos = Math.cos(motoAngle);
+    const sin = Math.sin(motoAngle);
 
     // Remove old other-player markers
     document.querySelectorAll('.minimap-marker.other-player').forEach(m => m.remove());
@@ -2214,8 +2254,11 @@ function updateMinimapMultiplayer() {
     Object.values(otherPlayers).forEach(player => {
         if (!player.mesh) return;
 
-        const relX = (player.mesh.position.x - motorcycle.position.x) * minimapScale;
-        const relZ = (player.mesh.position.z - motorcycle.position.z) * minimapScale;
+        const dx = (player.mesh.position.x - motorcycle.position.x);
+        const dz = (player.mesh.position.z - motorcycle.position.z);
+        // Rotate relative to motorcycle heading
+        const relX = (dx * cos - dz * sin) * minimapScale;
+        const relZ = (dx * sin + dz * cos) * minimapScale;
 
         const marker = document.createElement('div');
         marker.className = 'minimap-marker other-player';

@@ -733,8 +733,16 @@
                 display: block;
             }
 
-            .speed-panel, .minimap {
+            .speed-panel {
                 display: none;
+            }
+
+            /* Smaller minimap for mobile */
+            .minimap {
+                width: 80px;
+                height: 80px;
+                bottom: 220px;
+                right: 15px;
             }
 
             /* Smaller HUD on mobile */
@@ -920,6 +928,15 @@
         .leaderboard-table tr.current-entry .date-cell {
             color: var(--ifood-red);
             font-weight: 600;
+        }
+
+        .leaderboard-table .name-cell {
+            font-weight: 600;
+            color: #fff;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .leaderboard-close-btn {
@@ -1478,6 +1495,7 @@
                     <thead>
                         <tr>
                             <th>Posição</th>
+                            <th>Nome</th>
                             <th>Dinheiro</th>
                             <th>Entregas</th>
                             <th>Data</th>
