@@ -1553,75 +1553,60 @@ function updateMinimap() {
     // Clear old markers
     document.querySelectorAll('.minimap-marker').forEach(m => m.remove());
 
-    // Player's heading: the direction they're facing
-    // In this game: forward = (sin(rotation), cos(rotation)) in world (x, z) coords
-    // When rotation = 0, player faces +Z
-    // When rotation = π/2, player faces +X
     const playerHeading = motorcycle.rotation.y;
 
     // Transform world position to minimap position (heading-up display)
-    // Uses atan2 to find angle from player to target, then places on minimap
-    // relative to player's heading
     function worldToMinimap(targetX, targetZ) {
         const dx = targetX - motorcycle.position.x;
         const dz = targetZ - motorcycle.position.z;
         const distance = Math.sqrt(dx * dx + dz * dz);
 
         if (distance < 0.1) {
-            // Target is at player position
             return { left: minimapCenter, top: minimapCenter };
         }
 
-        // Angle from player to target in world space
-        // atan2(x, z) gives angle where 0 = +Z, π/2 = +X (matches game convention)
         const worldAngle = Math.atan2(dx, dz);
-
-        // Relative angle: how far clockwise from player's heading is the target?
-        // If relativeAngle = 0, target is directly ahead
-        // If relativeAngle = π/2, target is to the right
-        // If relativeAngle = π, target is behind
-        // If relativeAngle = -π/2, target is to the left
         const relativeAngle = worldAngle - playerHeading;
-
-        // Position on minimap: angle 0 = up (top), angle π/2 = right
-        // In screen coords: up = negative Y (lower CSS top), right = positive X
-        // sin(relativeAngle) gives right component, cos(relativeAngle) gives forward component
         const scaledDist = distance * minimapScale;
-        const mapX = minimapCenter + Math.sin(relativeAngle) * scaledDist;
-        const mapY = minimapCenter - Math.cos(relativeAngle) * scaledDist;
 
-        // Clamp to minimap bounds
         return {
-            left: Math.max(5, Math.min(minimapSize - 5, mapX)),
-            top: Math.max(5, Math.min(minimapSize - 5, mapY))
+            left: Math.max(5, Math.min(minimapSize - 5, minimapCenter + Math.sin(relativeAngle) * scaledDist)),
+            top: Math.max(5, Math.min(minimapSize - 5, minimapCenter - Math.cos(relativeAngle) * scaledDist))
         };
     }
 
-    // Show markers for current order
+    // Helper to create and position a marker
+    function addMarker(x, z, className) {
+        const pos = worldToMinimap(x, z);
+        const marker = document.createElement('div');
+        marker.className = 'minimap-marker ' + className;
+        marker.style.left = pos.left + 'px';
+        marker.style.top = pos.top + 'px';
+        minimap.appendChild(marker);
+    }
+
+    // Show markers for current order (restaurant and customer)
     if (currentOrder) {
-        // Restaurant marker (orange) - only if we haven't picked up food yet
         if (!hasFood) {
             const restaurant = restaurants.find(r => r.userData.name === currentOrder.restaurant);
             if (restaurant) {
-                const pos = worldToMinimap(restaurant.position.x, restaurant.position.z);
-                const marker = document.createElement('div');
-                marker.className = 'minimap-marker restaurant';
-                marker.style.left = pos.left + 'px';
-                marker.style.top = pos.top + 'px';
-                minimap.appendChild(marker);
+                addMarker(restaurant.position.x, restaurant.position.z, 'restaurant');
             }
         }
 
-        // Customer marker (blue)
         const customer = customers.find(c => c.userData.name === currentOrder.customer);
         if (customer) {
-            const pos = worldToMinimap(customer.position.x, customer.position.z);
-            const marker = document.createElement('div');
-            marker.className = 'minimap-marker customer';
-            marker.style.left = pos.left + 'px';
-            marker.style.top = pos.top + 'px';
-            minimap.appendChild(marker);
+            addMarker(customer.position.x, customer.position.z, 'customer');
         }
+    }
+
+    // Show other players in multiplayer mode
+    if (isMultiplayer && otherPlayers) {
+        Object.values(otherPlayers).forEach(player => {
+            if (player.mesh) {
+                addMarker(player.mesh.position.x, player.mesh.position.z, 'other-player');
+            }
+        });
     }
 }
 
@@ -2277,50 +2262,6 @@ function updateOnlinePlayersUI() {
 }
 
 /**
- * Update minimap with other players
- */
-function updateMinimapMultiplayer() {
-    if (!isMultiplayer || !motorcycle) return;
-
-    const minimap = document.getElementById('minimap');
-    if (!minimap) return;
-
-    const minimapSize = minimap.offsetWidth || 150;
-    const minimapScale = minimapSize / 400;
-    const minimapCenter = minimapSize / 2;
-
-    const playerHeading = motorcycle.rotation.y;
-
-    // Remove old other-player markers
-    document.querySelectorAll('.minimap-marker.other-player').forEach(m => m.remove());
-
-    // Add markers for other players
-    Object.values(otherPlayers).forEach(player => {
-        if (!player.mesh) return;
-
-        const dx = player.mesh.position.x - motorcycle.position.x;
-        const dz = player.mesh.position.z - motorcycle.position.z;
-        const distance = Math.sqrt(dx * dx + dz * dz);
-
-        if (distance < 0.1) return;
-
-        // Angle from player to other player in world space
-        const worldAngle = Math.atan2(dx, dz);
-        const relativeAngle = worldAngle - playerHeading;
-
-        const scaledDist = distance * minimapScale;
-        const mapX = minimapCenter + Math.sin(relativeAngle) * scaledDist;
-        const mapY = minimapCenter - Math.cos(relativeAngle) * scaledDist;
-
-        const marker = document.createElement('div');
-        marker.className = 'minimap-marker other-player';
-        marker.style.left = Math.max(5, Math.min(minimapSize - 5, mapX)) + 'px';
-        marker.style.top = Math.max(5, Math.min(minimapSize - 5, mapY)) + 'px';
-        minimap.appendChild(marker);
-    });
-}
-
-/**
  * Set connection status UI
  */
 function setConnectionStatus(status, message) {
@@ -2634,7 +2575,6 @@ function animate() {
         if (isMultiplayer) {
             updateOtherPlayers();
             broadcastPosition();
-            updateMinimapMultiplayer();
 
             // Update online players UI less frequently
             if (Math.floor(clock.getElapsedTime() * 2) % 2 === 0) {
