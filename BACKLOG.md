@@ -138,25 +138,23 @@
 - **Files to modify:** `index.html`, `game.js`
 - **Benefits:** Improves new player retention and reduces learning curve
 
-#### 10. Add dynamic weather system affecting gameplay
-- **Description:** Implement weather conditions that modify physics and visibility
+#### 10. Add player emotes and horn system
+- **Description:** Quick reactions and horn sounds for social interaction during gameplay
 - **Implementation:**
-  - Create weather states: Clear (default), Rain, Fog
-  - Rain effects:
-    - Reduce MAX_SPEED by 20%
-    - Increase FRICTION (slippery roads)
-    - Add particle system for raindrops
-    - Add puddle reflections (optional)
-  - Fog effects:
-    - Reduce render distance
-    - Increase fog density (already in scene)
-    - Reduce minimap visibility range
-  - Weather transitions every 2-3 minutes
-  - Sync weather across multiplayer sessions
-  - Add weather indicator in HUD
-- **Estimated Complexity:** High
-- **Files to modify:** `game.js`, `server/index.js`
-- **Benefits:** Adds gameplay variety, increases challenge, enhances realism
+  - Add emote buttons in UI (number keys 1-5 or dedicated panel)
+    - 👍 Nice delivery!
+    - 😄 Having fun!
+    - 🎉 Celebration!
+    - 🏆 Winner!
+    - 💨 Speed boost!
+  - Implement horn sound (honk) with H key or button
+  - Show emote bubbles above player motorcycles (3-second duration)
+  - Broadcast emotes to all players via Socket.io
+  - Add simple celebration animation when emote is sent
+  - Mobile: swipe-able emote panel
+- **Estimated Complexity:** Low-Medium
+- **Files to modify:** `index.html`, `game.js`, `server/index.js`
+- **Benefits:** Enhances team interaction, adds fun social element perfect for team building, encourages player engagement
 
 ---
 
@@ -164,9 +162,9 @@
 
 - **Total Tasks:** 10
 - **Low Effort:** 3 tasks
-- **Medium Effort:** 2 tasks
-- **High Effort:** 3 tasks
+- **Medium Effort:** 3 tasks (includes emotes system)
+- **High Effort:** 2 tasks
 - **External Dependencies:** 1 task
-- **New Proposals:** 2 tasks
+- **New Proposals:** 2 tasks (tutorial + emotes)
 
-**Priority Recommendation:** Start with low-effort tasks (1-3) for quick wins, then tackle medium tasks (4-5) before attempting high-complexity features (6-7, 9-10). Handle domain migration (8) when infrastructure is ready.
+**Priority Recommendation:** Start with low-effort tasks (1-3) for quick wins, then tackle medium tasks (4-5, 10) before attempting high-complexity features (6-7, 9). Handle domain migration (8) when infrastructure is ready.
