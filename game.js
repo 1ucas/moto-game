@@ -1544,67 +1544,69 @@ function updateHUD() {
 
 function updateMinimap() {
     const minimap = document.getElementById('minimap');
-    if (!minimap) return;
+    if (!minimap || !motorcycle) return;
 
-    // Get actual minimap size (responsive for mobile)
     const minimapSize = minimap.offsetWidth || 150;
-    const minimapScale = minimapSize / 400; // Adjusted scale based on size
+    const minimapScale = minimapSize / 400;
     const minimapCenter = minimapSize / 2;
 
-    // Update markers on minimap
-    const existingMarkers = document.querySelectorAll('.minimap-marker');
-    existingMarkers.forEach(m => m.remove());
+    // Clear old markers
+    document.querySelectorAll('.minimap-marker').forEach(m => m.remove());
 
-    // Get motorcycle rotation for rotating the minimap view
-    // Use the rotation angle to transform world coordinates to heading-relative coordinates
-    const motoAngle = motorcycle ? motorcycle.rotation.y : 0;
-    const cos = Math.cos(motoAngle);
-    const sin = Math.sin(motoAngle);
+    const playerHeading = motorcycle.rotation.y;
 
-    // Helper function to rotate a point around the center based on motorcycle heading
-    function rotatePoint(dx, dz) {
-        // Rotate the relative position so that "forward" is always up on the minimap
-        const rotatedX = dx * cos - dz * sin;
-        const rotatedZ = dx * sin + dz * cos;
-        return { x: rotatedX, z: rotatedZ };
+    // Transform world position to minimap position (heading-up display)
+    function worldToMinimap(targetX, targetZ) {
+        const dx = targetX - motorcycle.position.x;
+        const dz = targetZ - motorcycle.position.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+
+        if (distance < 0.1) {
+            return { left: minimapCenter, top: minimapCenter };
+        }
+
+        const worldAngle = Math.atan2(dx, dz);
+        const relativeAngle = worldAngle - playerHeading;
+        const scaledDist = distance * minimapScale;
+
+        return {
+            left: Math.max(5, Math.min(minimapSize - 5, minimapCenter + Math.sin(relativeAngle) * scaledDist)),
+            top: Math.max(5, Math.min(minimapSize - 5, minimapCenter - Math.cos(relativeAngle) * scaledDist))
+        };
     }
 
-    // Only show current order markers (pickup and delivery)
+    // Helper to create and position a marker
+    function addMarker(x, z, className) {
+        const pos = worldToMinimap(x, z);
+        const marker = document.createElement('div');
+        marker.className = 'minimap-marker ' + className;
+        marker.style.left = pos.left + 'px';
+        marker.style.top = pos.top + 'px';
+        minimap.appendChild(marker);
+    }
+
+    // Show markers for current order (restaurant and customer)
     if (currentOrder) {
-        // Show pickup location (restaurant) if we don't have food yet
         if (!hasFood) {
             const restaurant = restaurants.find(r => r.userData.name === currentOrder.restaurant);
             if (restaurant) {
-                const dx = (restaurant.position.x - motorcycle.position.x);
-                const dz = (restaurant.position.z - motorcycle.position.z);
-                const rotated = rotatePoint(dx, dz);
-                const relX = rotated.x * minimapScale;
-                const relZ = rotated.z * minimapScale;
-
-                const marker = document.createElement('div');
-                marker.className = 'minimap-marker restaurant';
-                marker.style.left = Math.max(5, Math.min(minimapSize - 5, minimapCenter + relX)) + 'px';
-                marker.style.top = Math.max(5, Math.min(minimapSize - 5, minimapCenter - relZ)) + 'px';
-                minimap.appendChild(marker);
+                addMarker(restaurant.position.x, restaurant.position.z, 'restaurant');
             }
         }
 
-        // Always show delivery location (customer)
         const customer = customers.find(c => c.userData.name === currentOrder.customer);
         if (customer) {
-            const dx = (customer.position.x - motorcycle.position.x);
-            const dz = (customer.position.z - motorcycle.position.z);
-            const rotated = rotatePoint(dx, dz);
-            const relX = rotated.x * minimapScale;
-            const relZ = rotated.z * minimapScale;
-
-            const marker = document.createElement('div');
-            marker.className = 'minimap-marker customer';
-            // Keep marker visible at edge if off-screen
-            marker.style.left = Math.max(5, Math.min(minimapSize - 5, minimapCenter + relX)) + 'px';
-            marker.style.top = Math.max(5, Math.min(minimapSize - 5, minimapCenter - relZ)) + 'px';
-            minimap.appendChild(marker);
+            addMarker(customer.position.x, customer.position.z, 'customer');
         }
+    }
+
+    // Show other players in multiplayer mode
+    if (isMultiplayer && otherPlayers) {
+        Object.values(otherPlayers).forEach(player => {
+            if (player.mesh) {
+                addMarker(player.mesh.position.x, player.mesh.position.z, 'other-player');
+            }
+        });
     }
 }
 
@@ -2260,47 +2262,6 @@ function updateOnlinePlayersUI() {
 }
 
 /**
- * Update minimap with other players
- */
-function updateMinimapMultiplayer() {
-    if (!isMultiplayer) return;
-
-    const minimap = document.getElementById('minimap');
-    if (!minimap) return;
-
-    // Get actual minimap size (responsive for mobile)
-    const minimapSize = minimap.offsetWidth || 150;
-    const minimapScale = minimapSize / 400;
-    const minimapCenter = minimapSize / 2;
-
-    // Get motorcycle rotation for rotating the minimap view
-    // Use the rotation angle to transform world coordinates to heading-relative coordinates
-    const motoAngle = motorcycle ? motorcycle.rotation.y : 0;
-    const cos = Math.cos(motoAngle);
-    const sin = Math.sin(motoAngle);
-
-    // Remove old other-player markers
-    document.querySelectorAll('.minimap-marker.other-player').forEach(m => m.remove());
-
-    // Add markers for other players
-    Object.values(otherPlayers).forEach(player => {
-        if (!player.mesh) return;
-
-        const dx = (player.mesh.position.x - motorcycle.position.x);
-        const dz = (player.mesh.position.z - motorcycle.position.z);
-        // Rotate relative to motorcycle heading
-        const relX = (dx * cos - dz * sin) * minimapScale;
-        const relZ = (dx * sin + dz * cos) * minimapScale;
-
-        const marker = document.createElement('div');
-        marker.className = 'minimap-marker other-player';
-        marker.style.left = Math.max(5, Math.min(minimapSize - 5, minimapCenter + relX)) + 'px';
-        marker.style.top = Math.max(5, Math.min(minimapSize - 5, minimapCenter - relZ)) + 'px';
-        minimap.appendChild(marker);
-    });
-}
-
-/**
  * Set connection status UI
  */
 function setConnectionStatus(status, message) {
@@ -2614,7 +2575,6 @@ function animate() {
         if (isMultiplayer) {
             updateOtherPlayers();
             broadcastPosition();
-            updateMinimapMultiplayer();
 
             // Update online players UI less frequently
             if (Math.floor(clock.getElapsedTime() * 2) % 2 === 0) {
