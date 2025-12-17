@@ -457,16 +457,16 @@
             font-weight: 600;
         }
 
-        /* Mini-map */
+        /* Mini-map - Square design for clearer directions */
         .minimap {
             position: absolute;
             bottom: 30px;
             right: 30px;
             width: 150px;
             height: 150px;
-            background: rgba(255,255,255,0.9);
+            background: rgba(240,240,240,0.95);
             border: 3px solid #333;
-            border-radius: 50%;
+            border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
@@ -477,18 +477,31 @@
             position: relative;
         }
 
+        /* Player marker - arrow pointing up (forward direction) */
         .minimap-player {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 10px;
-            height: 10px;
-            background: var(--ifood-red);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--ifood-red);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 14px solid var(--ifood-red);
             z-index: 2;
+            filter: drop-shadow(0 0 3px var(--ifood-red));
         }
+
+        /* Direction labels on minimap */
+        .minimap-label {
+            position: absolute;
+            font-size: 9px;
+            font-weight: bold;
+            color: #666;
+            z-index: 1;
+        }
+        .minimap-label.north { top: 2px; left: 50%; transform: translateX(-50%); }
+        .minimap-label.south { bottom: 2px; left: 50%; transform: translateX(-50%); }
 
         .minimap-marker {
             position: absolute;
@@ -497,16 +510,17 @@
             border-radius: 50%;
             transform: translate(-50%, -50%);
             border: 2px solid #fff;
+            z-index: 3;
         }
 
         .minimap-marker.restaurant {
             background: #FF9800;
-            box-shadow: 0 0 4px rgba(0,0,0,0.3);
+            box-shadow: 0 0 6px #FF9800;
         }
 
         .minimap-marker.customer {
             background: #2196F3;
-            box-shadow: 0 0 4px rgba(0,0,0,0.3);
+            box-shadow: 0 0 6px #2196F3;
         }
 
         /* Message popup */
@@ -1459,6 +1473,7 @@
             </div>
 
             <div class="minimap">
+                <span class="minimap-label north">FRONT</span>
                 <div class="minimap-inner" id="minimap">
                     <div class="minimap-player"></div>
                 </div>
