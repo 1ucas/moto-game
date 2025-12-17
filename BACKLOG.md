@@ -35,11 +35,26 @@
 - **Files to modify:** `game.js`
 - **Note:** Some tilt already exists, needs enhancement for more realistic effect
 
+#### 4. Improve POI emoji visibility from all angles
+- **Description:** Make pickup/delivery location emojis visible from any direction
+- **Implementation:**
+  - Current issue: 2D emoji sprites are barely visible from certain angles
+  - Solution options:
+    - **Option A:** Add continuous rotation animation to emojis
+    - **Option B:** Duplicate emoji in cross-section pattern (4 directions forming a +)
+    - **Option C:** Billboard effect (emoji always faces camera)
+  - Apply to both restaurant (orange) and customer (blue) markers
+  - Test visibility from all approach angles
+  - Ensure performance isn't impacted by animation/duplication
+- **Estimated Complexity:** Low
+- **Files to modify:** `game.js`
+- **Benefits:** Improves navigation and reduces frustration when locating POIs
+
 ---
 
 ### Medium Effort Tasks
 
-#### 4. Reduce speed when passing through grass
+#### 5. Reduce speed when passing through grass
 - **Description:** Add terrain-based physics to slow down motorcycle on grass/off-road areas
 - **Implementation:**
   - Define grass/terrain zones in city layout
@@ -50,7 +65,7 @@
 - **Files to modify:** `game.js`
 - **Dependencies:** Requires terrain/surface type system
 
-#### 5. Remove single-player option to simplify game logic
+#### 6. Remove single-player option to simplify game logic
 - **Description:** Remove local-only mode and require multiplayer server connection
 - **Implementation:**
   - Remove mode selection UI
@@ -66,7 +81,7 @@
 
 ### High Effort Tasks
 
-#### 6. Add jump mechanic (Space key + mobile support)
+#### 7. Add jump mechanic (Space key + mobile support)
 - **Description:** Allow motorcycle to jump over obstacles using spacebar (mobile: button)
 - **Implementation:**
   - Add vertical velocity system (Y-axis physics)
@@ -79,7 +94,7 @@
 - **Files to modify:** `index.html`, `game.js`
 - **Mobile Consideration:** Add dedicated jump button near joystick
 
-#### 7. Test and optimize for larger map (more concurrent players)
+#### 8. Test and optimize for larger map (more concurrent players)
 - **Description:** Evaluate performance with larger city and increased player capacity
 - **Implementation:**
   - Scale map from current ±200 units to ±400+ units
@@ -99,7 +114,7 @@
 
 ## Tasks Requiring External/Extra Processes
 
-#### 8. Change web domain to match game name
+#### 9. Change web domain to match game name
 - **Description:** Migrate from current domain to game-branded domain (e.g., foodrush.game, motofood.com)
 - **Implementation:**
   - Register new domain
@@ -121,7 +136,7 @@
 
 ## New Proposed Tasks
 
-#### 9. Add tutorial/onboarding system for new players
+#### 10. Add tutorial/onboarding system for new players
 - **Description:** Interactive first-time player experience explaining game mechanics
 - **Implementation:**
   - Create overlay tutorial system with step-by-step instructions
@@ -138,7 +153,7 @@
 - **Files to modify:** `index.html`, `game.js`
 - **Benefits:** Improves new player retention and reduces learning curve
 
-#### 10. Add player emotes and horn system
+#### 11. Add player emotes and horn system
 - **Description:** Quick reactions and horn sounds for social interaction during gameplay
 - **Implementation:**
   - Add emote buttons in UI (number keys 1-5 or dedicated panel)
@@ -160,11 +175,11 @@
 
 ## Backlog Summary
 
-- **Total Tasks:** 10
-- **Low Effort:** 3 tasks
-- **Medium Effort:** 3 tasks (includes emotes system)
-- **High Effort:** 2 tasks
-- **External Dependencies:** 1 task
-- **New Proposals:** 2 tasks (tutorial + emotes)
+- **Total Tasks:** 11
+- **Low Effort:** 4 tasks (1-4)
+- **Medium Effort:** 3 tasks (5-6, 11 - emotes system)
+- **High Effort:** 2 tasks (7-8)
+- **External Dependencies:** 1 task (9)
+- **New Proposals:** 2 tasks (10 - tutorial, 11 - emotes)
 
-**Priority Recommendation:** Start with low-effort tasks (1-3) for quick wins, then tackle medium tasks (4-5, 10) before attempting high-complexity features (6-7, 9). Handle domain migration (8) when infrastructure is ready.
+**Priority Recommendation:** Start with low-effort tasks (1-4) for quick wins, then tackle medium tasks (5-6, 11) before attempting high-complexity features (7-8, 10). Handle domain migration (9) when infrastructure is ready.
