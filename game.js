@@ -1570,7 +1570,7 @@ function updateMinimap() {
         const scaledDist = distance * minimapScale;
 
         return {
-            left: Math.max(5, Math.min(minimapSize - 5, minimapCenter + Math.sin(relativeAngle) * scaledDist)),
+            left: Math.max(5, Math.min(minimapSize - 5, minimapCenter - Math.sin(relativeAngle) * scaledDist)),
             top: Math.max(5, Math.min(minimapSize - 5, minimapCenter - Math.cos(relativeAngle) * scaledDist))
         };
     }
