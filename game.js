@@ -1665,7 +1665,7 @@ function updateEngineSound() {
     oscillator.frequency.setTargetAtTime(freq, audioContext.currentTime, 0.1);
 
     // Volume based on speed
-    const volume = Math.min(Math.abs(speed) / 30, 0.08);
+    const volume = Math.min(Math.abs(speed) / 30, 0.04);
     gainNode.gain.setTargetAtTime(volume, audioContext.currentTime, 0.1);
 }
 
