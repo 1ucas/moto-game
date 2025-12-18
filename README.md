@@ -1,10 +1,12 @@
 # Food Rush - Delivery Racing Game
 
-A 3D delivery racing game built with Three.js where you play as a motorcycle courier making deliveries across a vibrant city. Race against the clock to earn as much money as possible in 3 minutes!
+A multiplayer 3D delivery racing game built with Three.js where you play as a motorcycle courier making deliveries across a vibrant city. Race against the clock to earn as much money as possible in 3 minutes while seeing other players on the map!
 
 ## Play the Game
 
-Open `index.html` in a modern web browser. No build step required.
+**Server Required:** This game requires a multiplayer server to run. See the [Backend Setup](#backend-multiplayer-server) section below.
+
+Once the server is running, open the game in a modern web browser.
 
 ### Controls
 
@@ -99,7 +101,7 @@ const CONFIG = {
 
 ## Backend (Multiplayer Server)
 
-The multiplayer server enables players to see each other on the map while completing their own deliveries.
+The multiplayer server is required to play the game. It enables players to see each other on the map while completing their own deliveries.
 
 ### Technologies
 
@@ -168,13 +170,7 @@ sessions (id, user_id, started_at, ended_at, earnings, deliveries_completed, pla
 
 ## Deployment
 
-### Frontend Only (Static Hosting)
-
-Upload `index.html` and `game.js` to any static host (GitHub Pages, Netlify, Vercel, etc.)
-
-### With Multiplayer Server
-
-#### 1. Deploy Server to DigitalOcean/VPS
+### Deploy Server to DigitalOcean/VPS
 
 ```bash
 # Copy files to server
@@ -192,7 +188,7 @@ pm2 start index.js --name foodrush
 pm2 save && pm2 startup
 ```
 
-#### 2. Configure Nginx (Reverse Proxy)
+### Configure Nginx (Reverse Proxy)
 
 ```nginx
 server {
@@ -223,16 +219,7 @@ certbot --nginx -d your-domain.com
 systemctl reload nginx
 ```
 
-#### 3. Enable Multiplayer in Client
-
-Edit `game.js`, find the end of the file and uncomment:
-
-```javascript
-multiplayerServerUrl = 'https://your-domain.com';
-checkMultiplayerAvailability();
-```
-
-The "Jogar Online" button will appear automatically when the server is reachable.
+The game will automatically connect to the server when opened.
 
 ---
 

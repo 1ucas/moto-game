@@ -2260,6 +2260,9 @@ function startGame() {
         document.getElementById('online-panel').classList.add('visible');
     }
 
+    // Hide connection status during gameplay (only show on initial screen)
+    document.getElementById('connection-status').style.display = 'none';
+
     // Hide cursor during gameplay
     document.body.classList.add('game-active');
 
@@ -2279,7 +2282,7 @@ function startGame() {
     motorcycle.position.set(0, 0, 0);
     motorcycle.rotation.set(0, 0, 0);
 
-    // Generate first order (only in single-player or if not already set by server)
+    // Generate first order if not already set by server
     if (!isMultiplayer || !currentOrder) {
         generateNewOrder();
     } else {
@@ -3025,40 +3028,9 @@ function startMultiplayerGame() {
     }, 10000);
 }
 
-/**
- * Check if multiplayer server is available and show button
- */
-function checkMultiplayerAvailability() {
-    // Only show multiplayer on shurato.com.br (third-party cookies blocked elsewhere)
-    if (!window.location.hostname.includes('shurato.com.br')) return;
-    if (!multiplayerServerUrl) return;
 
-    fetch(multiplayerServerUrl + '/health')
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'ok') {
-                const btn = document.getElementById('multiplayer-btn');
-                const count = document.getElementById('online-count');
-                if (btn) {
-                    btn.style.display = 'inline-block';
-                    if (count && data.players > 0) {
-                        count.textContent = data.players + ' online';
-                    }
-                }
-            }
-        })
-        .catch(() => {
-            // Server not available, keep button hidden
-        });
-}
+// ============= GAME LOOP WITH MULTIPLAYER =============
 
-// ============= MODIFIED GAME FUNCTIONS FOR MULTIPLAYER =============
-
-// Store original functions
-const originalAnimate = animate;
-const originalUpdateMinimap = updateMinimap;
-
-// Override animate to include multiplayer updates
 function animate() {
     requestAnimationFrame(animate);
 
@@ -3098,8 +3070,6 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// Override endGame to handle multiplayer
-const originalEndGame = endGame;
 function endGame() {
     gameRunning = false;
     stopEngineSound();
@@ -3142,9 +3112,5 @@ function endGame() {
 init();
 enhanceGame();
 
-// Check multiplayer availability after init
-// Multiplayer only works when served from shurato.com.br (same-origin cookies)
-if (window.location.hostname.includes('shurato.com.br')) {
-    multiplayerServerUrl = window.location.origin;
-    checkMultiplayerAvailability();
-}
+// Always enable multiplayer - server is required to play
+multiplayerServerUrl = window.location.origin;
