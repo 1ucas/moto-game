@@ -2260,6 +2260,9 @@ function startGame() {
         document.getElementById('online-panel').classList.add('visible');
     }
 
+    // Hide connection status during gameplay (only show on initial screen)
+    document.getElementById('connection-status').style.display = 'none';
+
     // Hide cursor during gameplay
     document.body.classList.add('game-active');
 
@@ -3142,9 +3145,5 @@ function endGame() {
 init();
 enhanceGame();
 
-// Check multiplayer availability after init
-// Multiplayer only works when served from shurato.com.br (same-origin cookies)
-if (window.location.hostname.includes('shurato.com.br')) {
-    multiplayerServerUrl = window.location.origin;
-    checkMultiplayerAvailability();
-}
+// Always enable multiplayer - server is required to play
+multiplayerServerUrl = window.location.origin;
