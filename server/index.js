@@ -17,6 +17,7 @@ const crypto = require('crypto');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const { exec } = require('child_process');
 
 // ============================================================
 // CONFIGURATION
@@ -30,6 +31,11 @@ const SESSION_EXPIRY_YEARS = 5;
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
     : ['http://localhost:3000', 'http://localhost:5500', 'http://127.0.0.1:5500', 'https://shurato.com.br', 'https://www.shurato.com.br'];
+
+// Deploy webhook configuration
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || '';
+const REPO_PATH = process.env.REPO_PATH || path.join(__dirname, '..');
+const PM2_APP_NAME = process.env.PM2_APP_NAME || 'food-rush';
 
 // Game configuration (matches client CONFIG)
 const CONFIG = {
@@ -804,6 +810,107 @@ app.post('/api/session/username', async (req, res) => {
     } catch (error) {
         console.error('Username update error:', error);
         res.status(500).json({ error: 'Failed to update username' });
+    }
+});
+
+// ============================================================
+// GITHUB WEBHOOK FOR AUTO-DEPLOY
+// ============================================================
+//
+// Auto-deploys when pushing to main branch.
+//
+// Setup:
+//   1. Generate secret: openssl rand -hex 32
+//   2. Set env vars: WEBHOOK_SECRET, REPO_PATH, PM2_APP_NAME
+//   3. GitHub repo → Settings → Webhooks → Add webhook:
+//      - URL: https://shurato.com.br/deploy
+//      - Content type: application/json
+//      - Secret: your secret
+//      - Events: push only
+//
+// On push to main: verifies signature → git fetch/reset → pm2 restart
+//
+
+/**
+ * Verify GitHub webhook signature
+ */
+function verifyGitHubSignature(payload, signature) {
+    if (!WEBHOOK_SECRET) {
+        console.warn('⚠️  WEBHOOK_SECRET not configured - skipping signature verification');
+        return true; // Allow in dev mode without secret
+    }
+
+    if (!signature) return false;
+
+    const hmac = crypto.createHmac('sha256', WEBHOOK_SECRET);
+    const digest = 'sha256=' + hmac.update(payload).digest('hex');
+
+    try {
+        return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Execute deploy commands
+ */
+function runDeploy() {
+    return new Promise((resolve, reject) => {
+        const commands = [
+            `cd ${REPO_PATH}`,
+            'git fetch origin main',
+            'git reset --hard origin/main',
+            `pm2 restart ${PM2_APP_NAME}`
+        ].join(' && ');
+
+        exec(commands, (error, stdout, stderr) => {
+            if (error) {
+                console.error('❌ Deploy failed:', error.message);
+                console.error('stderr:', stderr);
+                reject(error);
+                return;
+            }
+            console.log('✅ Deploy successful');
+            if (stdout) console.log('stdout:', stdout);
+            resolve(stdout);
+        });
+    });
+}
+
+// Deploy webhook endpoint - uses raw body for signature verification
+app.post('/deploy', express.raw({ type: 'application/json' }), async (req, res) => {
+    const signature = req.headers['x-hub-signature-256'];
+
+    // Verify signature
+    if (!verifyGitHubSignature(req.body, signature)) {
+        console.warn('🚫 Deploy webhook: Invalid signature');
+        return res.status(401).send('Unauthorized');
+    }
+
+    let payload;
+    try {
+        payload = JSON.parse(req.body);
+    } catch {
+        return res.status(400).send('Invalid JSON payload');
+    }
+
+    // Only deploy on pushes to main branch
+    if (payload.ref !== 'refs/heads/main') {
+        console.log(`ℹ️  Ignoring push to ${payload.ref}`);
+        return res.send('OK - ignored (not main branch)');
+    }
+
+    console.log('🚀 Deploy triggered by push to main');
+    console.log(`   Commit: ${payload.after?.substring(0, 7)} by ${payload.pusher?.name}`);
+
+    // Respond immediately, deploy in background
+    res.send('OK - deploying');
+
+    try {
+        await runDeploy();
+    } catch (error) {
+        // Error already logged in runDeploy
     }
 });
 
