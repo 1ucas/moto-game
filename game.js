@@ -5,6 +5,13 @@
 const LEADERBOARD_KEY = 'ifoodRushLeaderboard';
 const MAX_LEADERBOARD_ENTRIES = 10;
 const JOYSTICK_POSITION_KEY = 'ifoodRushJoystickPosition';
+const ENGINE_SOUND_KEY = 'ifoodRushEngineSound';
+const MUSIC_KEY = 'ifoodRushMusic';
+
+// Sound/Music state
+let engineSoundEnabled = true;
+let musicEnabled = true;
+let musicNodes = null; // Will hold the background music oscillators
 
 // Track the last added entry to highlight it in leaderboard
 let lastAddedEntryDate = null;
@@ -177,6 +184,254 @@ function initJoystickPosition() {
     applyJoystickPosition(savedPosition);
 }
 
+// ============= SOUND PREFERENCES =============
+function getEngineSoundPreference() {
+    try {
+        const saved = localStorage.getItem(ENGINE_SOUND_KEY);
+        return saved === null ? true : saved === 'true';
+    } catch (e) {
+        return true;
+    }
+}
+
+function saveEngineSoundPreference(enabled) {
+    try {
+        localStorage.setItem(ENGINE_SOUND_KEY, enabled.toString());
+    } catch (e) {
+        console.error('Error saving engine sound preference:', e);
+    }
+}
+
+function getMusicPreference() {
+    try {
+        const saved = localStorage.getItem(MUSIC_KEY);
+        return saved === null ? true : saved === 'true';
+    } catch (e) {
+        return true;
+    }
+}
+
+function saveMusicPreference(enabled) {
+    try {
+        localStorage.setItem(MUSIC_KEY, enabled.toString());
+    } catch (e) {
+        console.error('Error saving music preference:', e);
+    }
+}
+
+function toggleEngineSound() {
+    engineSoundEnabled = !engineSoundEnabled;
+    saveEngineSoundPreference(engineSoundEnabled);
+    updateSoundToggleUI();
+
+    // If disabled, immediately silence the engine
+    if (!engineSoundEnabled && gainNode) {
+        gainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.05);
+    }
+}
+
+function toggleMusic() {
+    musicEnabled = !musicEnabled;
+    saveMusicPreference(musicEnabled);
+    updateMusicToggleUI();
+
+    if (musicEnabled && gameRunning) {
+        startBackgroundMusic();
+    } else {
+        stopBackgroundMusic();
+    }
+}
+
+function updateSoundToggleUI() {
+    const btn = document.getElementById('engine-sound-btn');
+    if (btn) {
+        btn.textContent = engineSoundEnabled ? '🔊 Som' : '🔇 Som';
+        btn.classList.toggle('muted', !engineSoundEnabled);
+    }
+}
+
+function updateMusicToggleUI() {
+    const btn = document.getElementById('music-btn');
+    if (btn) {
+        btn.textContent = musicEnabled ? '🎵 Música' : '🎵 Música';
+        btn.classList.toggle('muted', !musicEnabled);
+    }
+}
+
+function initSoundPreferences() {
+    engineSoundEnabled = getEngineSoundPreference();
+    musicEnabled = getMusicPreference();
+    updateSoundToggleUI();
+    updateMusicToggleUI();
+}
+
+// ============= BACKGROUND MUSIC (Pokémon Bike Theme Style) =============
+// Fun, upbeat chiptune-style melody using Web Audio API
+function startBackgroundMusic() {
+    if (!audioContext || !musicEnabled || musicNodes) return;
+
+    // Create a master gain for music
+    const musicGain = audioContext.createGain();
+    musicGain.gain.value = 0.12;
+    musicGain.connect(audioContext.destination);
+
+    // The melody - fun, bouncy notes like Pokémon bike theme
+    // Using a pentatonic scale for that cheerful game feel
+    const melody = [
+        // Bar 1: Upbeat intro
+        { note: 'E5', duration: 0.15 },
+        { note: 'G5', duration: 0.15 },
+        { note: 'A5', duration: 0.15 },
+        { note: 'B5', duration: 0.15 },
+        { note: 'D6', duration: 0.3 },
+        { note: 'B5', duration: 0.15 },
+        { note: 'A5', duration: 0.15 },
+        // Bar 2: Continue the energy
+        { note: 'G5', duration: 0.15 },
+        { note: 'E5', duration: 0.15 },
+        { note: 'G5', duration: 0.3 },
+        { note: 'A5', duration: 0.15 },
+        { note: 'G5', duration: 0.15 },
+        { note: 'E5', duration: 0.3 },
+        // Bar 3: Build up
+        { note: 'D5', duration: 0.15 },
+        { note: 'E5', duration: 0.15 },
+        { note: 'G5', duration: 0.15 },
+        { note: 'A5', duration: 0.15 },
+        { note: 'B5', duration: 0.15 },
+        { note: 'D6', duration: 0.15 },
+        { note: 'E6', duration: 0.3 },
+        // Bar 4: Resolution with bounce
+        { note: 'D6', duration: 0.15 },
+        { note: 'B5', duration: 0.15 },
+        { note: 'G5', duration: 0.15 },
+        { note: 'A5', duration: 0.3 },
+        { note: 'G5', duration: 0.15 },
+        { note: 'E5', duration: 0.3 },
+    ];
+
+    // Note frequencies
+    const noteFreqs = {
+        'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00,
+        'A4': 440.00, 'B4': 493.88,
+        'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99,
+        'A5': 880.00, 'B5': 987.77,
+        'C6': 1046.50, 'D6': 1174.66, 'E6': 1318.51, 'F6': 1396.91, 'G6': 1567.98
+    };
+
+    // Calculate total loop duration
+    let totalDuration = 0;
+    melody.forEach(n => totalDuration += n.duration);
+
+    // Bass line - simple bouncy rhythm
+    const bassPattern = [
+        { note: 'E3', duration: 0.3 },
+        { note: 'E3', duration: 0.15 },
+        { note: 'G3', duration: 0.15 },
+        { note: 'A3', duration: 0.3 },
+        { note: 'G3', duration: 0.3 },
+    ];
+    const bassFreqs = {
+        'E3': 164.81, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94, 'D3': 146.83
+    };
+
+    let bassDuration = 0;
+    bassPattern.forEach(n => bassDuration += n.duration);
+
+    // Schedule melody loop
+    let melodyTime = audioContext.currentTime;
+    const loopInterval = totalDuration * 1000;
+
+    function scheduleMelody() {
+        if (!musicEnabled || !musicNodes) return;
+
+        let time = audioContext.currentTime + 0.1;
+        melody.forEach(noteData => {
+            const osc = audioContext.createOscillator();
+            const noteGain = audioContext.createGain();
+
+            osc.type = 'square'; // Chiptune sound
+            osc.frequency.value = noteFreqs[noteData.note];
+
+            osc.connect(noteGain);
+            noteGain.connect(musicGain);
+
+            // Quick attack, sustain, quick release for bouncy feel
+            noteGain.gain.setValueAtTime(0, time);
+            noteGain.gain.linearRampToValueAtTime(0.6, time + 0.02);
+            noteGain.gain.setValueAtTime(0.5, time + noteData.duration * 0.7);
+            noteGain.gain.linearRampToValueAtTime(0, time + noteData.duration);
+
+            osc.start(time);
+            osc.stop(time + noteData.duration + 0.05);
+
+            time += noteData.duration;
+        });
+    }
+
+    function scheduleBass() {
+        if (!musicEnabled || !musicNodes) return;
+
+        let time = audioContext.currentTime + 0.1;
+        const repetitions = Math.ceil(totalDuration / bassDuration);
+
+        for (let rep = 0; rep < repetitions; rep++) {
+            bassPattern.forEach(noteData => {
+                if (time < audioContext.currentTime + totalDuration + 0.1) {
+                    const osc = audioContext.createOscillator();
+                    const noteGain = audioContext.createGain();
+
+                    osc.type = 'triangle'; // Softer bass
+                    osc.frequency.value = bassFreqs[noteData.note] || 164.81;
+
+                    osc.connect(noteGain);
+                    noteGain.connect(musicGain);
+
+                    noteGain.gain.setValueAtTime(0, time);
+                    noteGain.gain.linearRampToValueAtTime(0.4, time + 0.02);
+                    noteGain.gain.linearRampToValueAtTime(0, time + noteData.duration * 0.9);
+
+                    osc.start(time);
+                    osc.stop(time + noteData.duration);
+                }
+                time += noteData.duration;
+            });
+        }
+    }
+
+    // Initial schedule
+    scheduleMelody();
+    scheduleBass();
+
+    // Create loop timer
+    const loopTimer = setInterval(() => {
+        if (!musicEnabled || !musicNodes) {
+            clearInterval(loopTimer);
+            return;
+        }
+        scheduleMelody();
+        scheduleBass();
+    }, loopInterval);
+
+    // Store references for cleanup
+    musicNodes = {
+        gain: musicGain,
+        loopTimer: loopTimer
+    };
+}
+
+function stopBackgroundMusic() {
+    if (musicNodes) {
+        if (musicNodes.loopTimer) {
+            clearInterval(musicNodes.loopTimer);
+        }
+        if (musicNodes.gain) {
+            musicNodes.gain.gain.setTargetAtTime(0, audioContext.currentTime, 0.1);
+        }
+        musicNodes = null;
+    }
+}
+
 // ============= GAME CONFIG =============
 const CONFIG = {
     GAME_TIME: 300, // 5 minutes
@@ -280,6 +535,9 @@ function init() {
 
     // Initialize joystick position preference
     initJoystickPosition();
+
+    // Initialize sound preferences
+    initSoundPreferences();
 
     // Hide keyboard instructions on mobile devices
     if (isMobileDevice()) {
@@ -1664,8 +1922,8 @@ function updateEngineSound() {
 
     oscillator.frequency.setTargetAtTime(freq, audioContext.currentTime, 0.1);
 
-    // Volume based on speed
-    const volume = Math.min(Math.abs(speed) / 30, 0.04);
+    // Volume based on speed (respects engine sound toggle)
+    const volume = engineSoundEnabled ? Math.min(Math.abs(speed) / 30, 0.04) : 0;
     gainNode.gain.setTargetAtTime(volume, audioContext.currentTime, 0.1);
 }
 
@@ -1792,6 +2050,11 @@ function startGame() {
 
     gameRunning = true;
 
+    // Start background music if enabled
+    if (musicEnabled) {
+        startBackgroundMusic();
+    }
+
     // Show welcome message based on device type
     setTimeout(() => {
         const isTouchDevice = isMobileDevice();
@@ -1816,8 +2079,9 @@ function isMobileDevice() {
 function endGame() {
     gameRunning = false;
 
-    // Stop the engine sound
+    // Stop the engine sound and background music
     stopEngineSound();
+    stopBackgroundMusic();
 
     // Show cursor again
     document.body.classList.remove('game-active');
@@ -2600,6 +2864,7 @@ const originalEndGame = endGame;
 function endGame() {
     gameRunning = false;
     stopEngineSound();
+    stopBackgroundMusic();
     document.body.classList.remove('game-active');
 
     // Notify server if multiplayer

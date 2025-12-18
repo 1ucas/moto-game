@@ -290,6 +290,47 @@
             }
         }
 
+        /* Sound Settings */
+        .sound-settings {
+            position: relative;
+            z-index: 2;
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 0.8rem;
+            animation: fadeIn 1s ease-out 0.9s both;
+        }
+
+        .sound-toggle-btn {
+            padding: 0.6rem 1.2rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: rgba(0,60,100,0.8);
+            background: rgba(255,255,255,0.7);
+            border: 2px solid rgba(0,60,100,0.3);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sound-toggle-btn:hover {
+            background: rgba(255,255,255,0.9);
+            border-color: var(--ifood-red);
+            color: var(--ifood-red);
+        }
+
+        .sound-toggle-btn.muted {
+            background: rgba(200,200,200,0.5);
+            color: rgba(0,60,100,0.5);
+            border-color: rgba(0,60,100,0.2);
+        }
+
+        .sound-toggle-btn.muted:hover {
+            background: rgba(255,255,255,0.7);
+            border-color: var(--ifood-red);
+            color: var(--ifood-red);
+        }
+
         /* Floating emojis decoration */
         .floating-emoji {
             position: absolute;
@@ -1436,6 +1477,16 @@
                         Direita ➡️
                     </button>
                 </div>
+            </div>
+
+            <!-- Sound Settings -->
+            <div class="sound-settings">
+                <button class="sound-toggle-btn" id="engine-sound-btn" onclick="toggleEngineSound()">
+                    🔊 Som
+                </button>
+                <button class="sound-toggle-btn" id="music-btn" onclick="toggleMusic()">
+                    🎵 Música
+                </button>
             </div>
 
             <button class="leaderboard-btn" onclick="showLeaderboard()">🏆 Ver Ranking</button>

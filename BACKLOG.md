@@ -5,24 +5,24 @@
 
 ### Low Effort Tasks
 
-#### 1. Add motorcycle sound toggle
-- **Description:** Add UI control to mute/unmute the engine sound
-- **Implementation:**
-  - Add toggle button in settings panel
-  - Store preference in localStorage
-  - Control existing `engineSound.gainNode` volume
-- **Estimated Complexity:** Low
-- **Files to modify:** `index.html`, `game.js`
+#### ~~1. Add motorcycle sound toggle~~ ✅
+- ~~**Description:** Add UI control to mute/unmute the engine sound~~
+- ~~**Implementation:**~~
+  - ~~Add toggle button in settings panel~~
+  - ~~Store preference in localStorage~~
+  - ~~Control existing `engineSound.gainNode` volume~~
+- ~~**Estimated Complexity:** Low~~
+- ~~**Files to modify:** `index.html`, `game.js`~~
 
-#### 2. Add background music with toggle control
-- **Description:** Implement ambient background music with on/off toggle
-- **Implementation:**
-  - Create looping background music track (Web Audio API or audio file)
-  - Add toggle button in settings panel
-  - Store preference in localStorage
-  - Ensure music doesn't interfere with engine/delivery sounds
-- **Estimated Complexity:** Low
-- **Files to modify:** `index.html`, `game.js`
+#### ~~2. Add background music with toggle control~~ ✅
+- ~~**Description:** Implement ambient background music with on/off toggle~~
+- ~~**Implementation:**~~
+  - ~~Create looping background music track (Web Audio API or audio file)~~
+  - ~~Add toggle button in settings panel~~
+  - ~~Store preference in localStorage~~
+  - ~~Ensure music doesn't interfere with engine/delivery sounds~~
+- ~~**Estimated Complexity:** Low~~
+- ~~**Files to modify:** `index.html`, `game.js`~~
 
 #### 3. Tilt motorcycle sideways when turning
 - **Description:** Add realistic lean animation when the motorcycle turns
@@ -175,11 +175,11 @@
 
 ## Backlog Summary
 
-- **Total Tasks:** 11
-- **Low Effort:** 4 tasks (1-4)
+- **Total Tasks:** 11 (2 completed)
+- **Low Effort:** 4 tasks (~~1~~✅, ~~2~~✅, 3-4)
 - **Medium Effort:** 3 tasks (5-6, 11 - emotes system)
 - **High Effort:** 2 tasks (7-8)
 - **External Dependencies:** 1 task (9)
 - **New Proposals:** 2 tasks (10 - tutorial, 11 - emotes)
 
-**Priority Recommendation:** Start with low-effort tasks (1-4) for quick wins, then tackle medium tasks (5-6, 11) before attempting high-complexity features (7-8, 10). Handle domain migration (9) when infrastructure is ready.
+**Priority Recommendation:** Start with remaining low-effort tasks (3-4) for quick wins, then tackle medium tasks (5-6, 11) before attempting high-complexity features (7-8, 10). Handle domain migration (9) when infrastructure is ready.
