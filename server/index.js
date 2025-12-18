@@ -79,22 +79,26 @@ function verifyGitHubSignature(rawBody, signatureHeader) {
         return false;
     }
 
-    if (!signatureHeader || typeof signatureHeader !== 'string') return false;
+    const signatureValue = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader;
+    if (!signatureValue || typeof signatureValue !== 'string') return false;
     if (!Buffer.isBuffer(rawBody)) return false;
 
-    const [algo, providedHex] = signatureHeader.split('=');
+    const [algo, providedHex] = signatureValue.split('=');
     if (algo !== 'sha256' || !providedHex) return false;
 
-    const expectedHex = crypto
-        .createHmac('sha256', WEBHOOK_SECRET)
-        .update(rawBody)
-        .digest('hex');
-
     try {
-        const expected = Buffer.from(expectedHex, 'hex');
         const provided = Buffer.from(providedHex, 'hex');
+        const expected = crypto.createHmac('sha256', WEBHOOK_SECRET).update(rawBody).digest();
         if (expected.length !== provided.length) return false;
-        return crypto.timingSafeEqual(provided, expected);
+        const ok = crypto.timingSafeEqual(provided, expected);
+        if (!ok && process.env.DEBUG_WEBHOOK === '1') {
+            console.warn('🔎 Webhook signature mismatch', {
+                providedPrefix: providedHex.slice(0, 12),
+                rawBodyBytes: rawBody.length,
+                secretLength: String(WEBHOOK_SECRET).length,
+            });
+        }
+        return ok;
     } catch {
         return false;
     }
@@ -150,6 +154,11 @@ app.post('/deploy', (req, res) => {
     try {
         const deliveryId = req.headers['x-github-delivery'];
         const signature256 = req.headers['x-hub-signature-256'];
+        const eventName = req.headers['x-github-event'];
+
+        if (eventName && eventName !== 'push') {
+            return res.send('OK - ignored (not push event)');
+        }
 
         if (!verifyGitHubSignature(req.rawBody, signature256)) {
             console.warn(`🚫 Deploy webhook: Invalid signature (delivery=${deliveryId || 'n/a'})`);

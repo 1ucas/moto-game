@@ -307,140 +307,168 @@ function startBackgroundMusic() {
 
     // Note frequencies (Game Boy style tuning)
     const noteFreqs = {
+        'G2': 98.00, 'G#2': 103.83, 'A2': 110.00, 'A#2': 116.54, 'B2': 123.47,
         'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94,
         'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88,
         'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99, 'G#5': 830.61, 'A5': 880.00, 'A#5': 932.33, 'B5': 987.77,
         'C6': 1046.50, 'D6': 1174.66, 'E6': 1318.51
     };
 
-    // Tempo: ~150 BPM, so sixteenth note = 0.1s, eighth = 0.2s, quarter = 0.4s
+    // Tempo: ~150 BPM
     const sixteenth = 0.1;
     const eighth = 0.2;
     const quarter = 0.4;
     const half = 0.8;
     const dottedEighth = 0.3;
 
-    // This is the recognizable bicycle theme
+    // Pokemon Red/Blue Bicycle Theme
     const melody = [
-        // Intro phrase 1
+        // Phrase 1
+        { note: 'E5', duration: quarter },
+        { note: 'C5', duration: eighth },
+        { note: 'G4', duration: eighth },
+        { note: 'C5', duration: eighth },
         { note: 'E5', duration: eighth },
-        { note: 'D#5', duration: sixteenth },
-        { note: 'E5', duration: sixteenth },
-        { note: 'F#5', duration: eighth },
-        { note: 'G#5', duration: eighth },
-        { note: 'A5', duration: quarter },
-        { note: 'G#5', duration: eighth },
-        { note: 'F#5', duration: eighth },
+        { note: 'F5', duration: eighth },
+        { note: 'G5', duration: eighth },
         // Phrase 2
-        { note: 'E5', duration: eighth },
-        { note: 'D#5', duration: sixteenth },
-        { note: 'E5', duration: sixteenth },
-        { note: 'F#5', duration: eighth },
-        { note: 'E5', duration: eighth },
-        { note: 'D#5', duration: quarter },
-        { note: 'E5', duration: eighth },
-        { note: 'F#5', duration: eighth },
-        // Phrase 3 - rising
-        { note: 'G#5', duration: eighth },
+        { note: 'A5', duration: quarter },
+        { note: 'F5', duration: eighth },
+        { note: 'C5', duration: eighth },
+        { note: 'F5', duration: eighth },
         { note: 'A5', duration: eighth },
-        { note: 'B5', duration: eighth },
+        { note: 'G5', duration: eighth },
+        { note: 'F5', duration: eighth },
+        // Phrase 3
+        { note: 'G5', duration: quarter },
+        { note: 'E5', duration: eighth },
+        { note: 'C5', duration: eighth },
+        { note: 'E5', duration: eighth },
+        { note: 'G5', duration: eighth },
+        { note: 'F5', duration: eighth },
+        { note: 'E5', duration: eighth },
+        // Phrase 4
+        { note: 'D5', duration: quarter },
+        { note: 'F5', duration: eighth },
         { note: 'A5', duration: eighth },
-        { note: 'G#5', duration: eighth },
-        { note: 'F#5', duration: eighth },
+        { note: 'G5', duration: quarter },
+        { note: 'B4', duration: quarter },
+        
+        // Repeat Phrase 1
         { note: 'E5', duration: quarter },
-        // Phrase 4 - resolution
-        { note: 'F#5', duration: eighth },
-        { note: 'G#5', duration: eighth },
+        { note: 'C5', duration: eighth },
+        { note: 'G4', duration: eighth },
+        { note: 'C5', duration: eighth },
+        { note: 'E5', duration: eighth },
+        { note: 'F5', duration: eighth },
+        { note: 'G5', duration: eighth },
+        // Repeat Phrase 2
+        { note: 'A5', duration: quarter },
+        { note: 'F5', duration: eighth },
+        { note: 'C5', duration: eighth },
+        { note: 'F5', duration: eighth },
         { note: 'A5', duration: eighth },
-        { note: 'G#5', duration: eighth },
-        { note: 'F#5', duration: eighth },
+        { note: 'G5', duration: eighth },
+        { note: 'F5', duration: eighth },
+        // Repeat Phrase 3
+        { note: 'G5', duration: quarter },
         { note: 'E5', duration: eighth },
-        { note: 'D#5', duration: eighth },
+        { note: 'C5', duration: eighth },
         { note: 'E5', duration: eighth },
-        // Second section - bouncy part
-        { note: 'B5', duration: sixteenth },
-        { note: 'A5', duration: sixteenth },
-        { note: 'G#5', duration: eighth },
-        { note: 'F#5', duration: eighth },
+        { note: 'G5', duration: eighth },
+        { note: 'F5', duration: eighth },
         { note: 'E5', duration: eighth },
-        { note: 'F#5', duration: eighth },
-        { note: 'G#5', duration: quarter },
-        // Ending phrase
-        { note: 'A5', duration: eighth },
-        { note: 'G#5', duration: eighth },
-        { note: 'F#5', duration: eighth },
-        { note: 'E5', duration: eighth },
-        { note: 'F#5', duration: quarter },
-        { note: 'E5', duration: quarter },
+        // Ending
+        { note: 'D5', duration: quarter },
+        { note: 'F5', duration: eighth },
+        { note: 'B4', duration: eighth },
+        { note: 'C5', duration: half },
     ];
 
-    // Harmony/Counter melody (Pulse 2 channel)
+    // Harmony (Pulse 2 channel) - Simplified counterpoint
     const harmony = [
-        // Supporting the intro
+        // Bar 1
+        { note: 'C4', duration: quarter },
+        { note: 'E4', duration: quarter },
+        { note: 'G4', duration: quarter },
+        { note: 'C5', duration: quarter },
+        // Bar 2
+        { note: 'F4', duration: quarter },
+        { note: 'A4', duration: quarter },
+        { note: 'C5', duration: quarter },
+        { note: 'A4', duration: quarter },
+        // Bar 3
+        { note: 'C4', duration: quarter },
+        { note: 'E4', duration: quarter },
+        { note: 'G4', duration: quarter },
+        { note: 'C5', duration: quarter },
+        // Bar 4
+        { note: 'G4', duration: quarter },
         { note: 'B4', duration: quarter },
-        { note: 'A4', duration: quarter },
+        { note: 'D5', duration: quarter },
+        { note: 'G4', duration: quarter },
+        // Bar 5
+        { note: 'C4', duration: quarter },
         { note: 'E4', duration: quarter },
-        { note: 'F#4', duration: quarter },
-        // Phrase 2 harmony
-        { note: 'G#4', duration: quarter },
+        { note: 'G4', duration: quarter },
+        { note: 'C5', duration: quarter },
+        // Bar 6
+        { note: 'F4', duration: quarter },
         { note: 'A4', duration: quarter },
-        { note: 'B4', duration: quarter },
+        { note: 'C5', duration: quarter },
         { note: 'A4', duration: quarter },
-        // Phrase 3 harmony
+        // Bar 7
+        { note: 'C4', duration: quarter },
         { note: 'E4', duration: quarter },
-        { note: 'F#4', duration: quarter },
-        { note: 'G#4', duration: quarter },
-        { note: 'A4', duration: quarter },
-        // Phrase 4 harmony
-        { note: 'F#4', duration: quarter },
-        { note: 'E4', duration: quarter },
-        { note: 'D#4', duration: quarter },
-        { note: 'E4', duration: quarter },
-        // Second section
-        { note: 'E4', duration: quarter },
-        { note: 'F#4', duration: quarter },
-        { note: 'G#4', duration: quarter },
-        // Ending
-        { note: 'A4', duration: quarter },
-        { note: 'G#4', duration: quarter },
-        { note: 'E4', duration: half },
+        { note: 'G4', duration: quarter },
+        { note: 'C5', duration: quarter },
+        // Bar 8
+        { note: 'G4', duration: quarter },
+        { note: 'G3', duration: quarter },
+        { note: 'C4', duration: half },
     ];
 
     // Bass line (Wave channel style)
     const bassPattern = [
-        { note: 'E3', duration: eighth },
-        { note: 'E3', duration: eighth },
-        { note: 'B3', duration: eighth },
-        { note: 'E3', duration: eighth },
-        { note: 'A3', duration: eighth },
-        { note: 'A3', duration: eighth },
-        { note: 'E3', duration: eighth },
-        { note: 'A3', duration: eighth },
-        { note: 'G#3', duration: eighth },
-        { note: 'G#3', duration: eighth },
-        { note: 'E3', duration: eighth },
-        { note: 'G#3', duration: eighth },
-        { note: 'F#3', duration: eighth },
-        { note: 'F#3', duration: eighth },
-        { note: 'B3', duration: eighth },
-        { note: 'F#3', duration: eighth },
-        // Repeat with variation
-        { note: 'E3', duration: eighth },
-        { note: 'B3', duration: eighth },
-        { note: 'E3', duration: eighth },
-        { note: 'B3', duration: eighth },
-        { note: 'A3', duration: eighth },
-        { note: 'E3', duration: eighth },
-        { note: 'A3', duration: eighth },
-        { note: 'E3', duration: eighth },
-        { note: 'G#3', duration: eighth },
-        { note: 'E3', duration: eighth },
-        { note: 'G#3', duration: eighth },
-        { note: 'B3', duration: eighth },
-        { note: 'F#3', duration: eighth },
-        { note: 'E3', duration: eighth },
-        { note: 'F#3', duration: quarter },
-        { note: 'E3', duration: quarter },
+        // Bar 1
+        { note: 'C3', duration: quarter },
+        { note: 'G3', duration: quarter },
+        { note: 'C3', duration: quarter },
+        { note: 'G3', duration: quarter },
+        // Bar 2
+        { note: 'F3', duration: quarter },
+        { note: 'C4', duration: quarter },
+        { note: 'F3', duration: quarter },
+        { note: 'C4', duration: quarter },
+        // Bar 3
+        { note: 'C3', duration: quarter },
+        { note: 'G3', duration: quarter },
+        { note: 'C3', duration: quarter },
+        { note: 'G3', duration: quarter },
+        // Bar 4
+        { note: 'G3', duration: quarter },
+        { note: 'D4', duration: quarter },
+        { note: 'G3', duration: quarter },
+        { note: 'D4', duration: quarter },
+        // Bar 5
+        { note: 'C3', duration: quarter },
+        { note: 'G3', duration: quarter },
+        { note: 'C3', duration: quarter },
+        { note: 'G3', duration: quarter },
+        // Bar 6
+        { note: 'F3', duration: quarter },
+        { note: 'C4', duration: quarter },
+        { note: 'F3', duration: quarter },
+        { note: 'C4', duration: quarter },
+        // Bar 7
+        { note: 'C3', duration: quarter },
+        { note: 'G3', duration: quarter },
+        { note: 'C3', duration: quarter },
+        { note: 'G3', duration: quarter },
+        // Bar 8
+        { note: 'G3', duration: quarter },
+        { note: 'G2', duration: quarter },
+        { note: 'C3', duration: half },
     ];
 
     // Calculate total loop duration from melody
