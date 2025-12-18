@@ -974,7 +974,7 @@ function createStreets() {
                 markingMaterial
             );
             hDash.rotation.x = -Math.PI / 2;
-            hDash.position.set(d, 0.02, i * GRID_SPACING);
+            hDash.position.set(d, 0.03, i * GRID_SPACING);
             scene.add(hDash);
 
             const vDash = new THREE.Mesh(
@@ -982,7 +982,7 @@ function createStreets() {
                 markingMaterial
             );
             vDash.rotation.x = -Math.PI / 2;
-            vDash.position.set(i * GRID_SPACING, 0.02, d);
+            vDash.position.set(i * GRID_SPACING, 0.03, d);
             scene.add(vDash);
         }
 
@@ -992,7 +992,7 @@ function createStreets() {
             whiteMaterial
         );
         hEdge1.rotation.x = -Math.PI / 2;
-        hEdge1.position.set(0, 0.02, i * GRID_SPACING + STREET_WIDTH / 2 - 1);
+        hEdge1.position.set(0, 0.05, i * GRID_SPACING + STREET_WIDTH / 2 - 1);
         scene.add(hEdge1);
 
         const hEdge2 = hEdge1.clone();
@@ -1004,7 +1004,7 @@ function createStreets() {
             whiteMaterial
         );
         vEdge1.rotation.x = -Math.PI / 2;
-        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.02, 0);
+        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.05, 0);
         scene.add(vEdge1);
 
         const vEdge2 = vEdge1.clone();
@@ -1042,7 +1042,7 @@ function createCityBlocks() {
                 grassMaterial
             );
             innerGrass.rotation.x = -Math.PI / 2;
-            innerGrass.position.set(blockCenterX, 0.03, blockCenterZ);
+            innerGrass.position.set(blockCenterX, 0.04, blockCenterZ);
             scene.add(innerGrass);
 
             // Add flowerbeds in some blocks
