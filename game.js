@@ -265,105 +265,213 @@ function initSoundPreferences() {
     updateMusicToggleUI();
 }
 
-// ============= BACKGROUND MUSIC (Pokémon Bike Theme Style) =============
-// Fun, upbeat chiptune-style melody using Web Audio API
+// ============= BACKGROUND MUSIC =============
 function startBackgroundMusic() {
     if (!audioContext || !musicEnabled || musicNodes) return;
 
     // Create a master gain for music
     const musicGain = audioContext.createGain();
-    musicGain.gain.value = 0.12;
+    musicGain.gain.value = 0.025;
     musicGain.connect(audioContext.destination);
 
-    // The melody - fun, bouncy notes like Pokémon bike theme
-    // Using a pentatonic scale for that cheerful game feel
-    const melody = [
-        // Bar 1: Upbeat intro
-        { note: 'E5', duration: 0.15 },
-        { note: 'G5', duration: 0.15 },
-        { note: 'A5', duration: 0.15 },
-        { note: 'B5', duration: 0.15 },
-        { note: 'D6', duration: 0.3 },
-        { note: 'B5', duration: 0.15 },
-        { note: 'A5', duration: 0.15 },
-        // Bar 2: Continue the energy
-        { note: 'G5', duration: 0.15 },
-        { note: 'E5', duration: 0.15 },
-        { note: 'G5', duration: 0.3 },
-        { note: 'A5', duration: 0.15 },
-        { note: 'G5', duration: 0.15 },
-        { note: 'E5', duration: 0.3 },
-        // Bar 3: Build up
-        { note: 'D5', duration: 0.15 },
-        { note: 'E5', duration: 0.15 },
-        { note: 'G5', duration: 0.15 },
-        { note: 'A5', duration: 0.15 },
-        { note: 'B5', duration: 0.15 },
-        { note: 'D6', duration: 0.15 },
-        { note: 'E6', duration: 0.3 },
-        // Bar 4: Resolution with bounce
-        { note: 'D6', duration: 0.15 },
-        { note: 'B5', duration: 0.15 },
-        { note: 'G5', duration: 0.15 },
-        { note: 'A5', duration: 0.3 },
-        { note: 'G5', duration: 0.15 },
-        { note: 'E5', duration: 0.3 },
-    ];
-
-    // Note frequencies
+    // Note frequencies (Game Boy style tuning)
     const noteFreqs = {
-        'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00,
-        'A4': 440.00, 'B4': 493.88,
-        'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99,
-        'A5': 880.00, 'B5': 987.77,
-        'C6': 1046.50, 'D6': 1174.66, 'E6': 1318.51, 'F6': 1396.91, 'G6': 1567.98
+        'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94,
+        'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88,
+        'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99, 'G#5': 830.61, 'A5': 880.00, 'A#5': 932.33, 'B5': 987.77,
+        'C6': 1046.50, 'D6': 1174.66, 'E6': 1318.51
     };
 
-    // Calculate total loop duration
+    // Tempo: ~150 BPM, so sixteenth note = 0.1s, eighth = 0.2s, quarter = 0.4s
+    const sixteenth = 0.1;
+    const eighth = 0.2;
+    const quarter = 0.4;
+    const half = 0.8;
+    const dottedEighth = 0.3;
+
+    // This is the recognizable bicycle theme
+    const melody = [
+        // Intro phrase 1
+        { note: 'E5', duration: eighth },
+        { note: 'D#5', duration: sixteenth },
+        { note: 'E5', duration: sixteenth },
+        { note: 'F#5', duration: eighth },
+        { note: 'G#5', duration: eighth },
+        { note: 'A5', duration: quarter },
+        { note: 'G#5', duration: eighth },
+        { note: 'F#5', duration: eighth },
+        // Phrase 2
+        { note: 'E5', duration: eighth },
+        { note: 'D#5', duration: sixteenth },
+        { note: 'E5', duration: sixteenth },
+        { note: 'F#5', duration: eighth },
+        { note: 'E5', duration: eighth },
+        { note: 'D#5', duration: quarter },
+        { note: 'E5', duration: eighth },
+        { note: 'F#5', duration: eighth },
+        // Phrase 3 - rising
+        { note: 'G#5', duration: eighth },
+        { note: 'A5', duration: eighth },
+        { note: 'B5', duration: eighth },
+        { note: 'A5', duration: eighth },
+        { note: 'G#5', duration: eighth },
+        { note: 'F#5', duration: eighth },
+        { note: 'E5', duration: quarter },
+        // Phrase 4 - resolution
+        { note: 'F#5', duration: eighth },
+        { note: 'G#5', duration: eighth },
+        { note: 'A5', duration: eighth },
+        { note: 'G#5', duration: eighth },
+        { note: 'F#5', duration: eighth },
+        { note: 'E5', duration: eighth },
+        { note: 'D#5', duration: eighth },
+        { note: 'E5', duration: eighth },
+        // Second section - bouncy part
+        { note: 'B5', duration: sixteenth },
+        { note: 'A5', duration: sixteenth },
+        { note: 'G#5', duration: eighth },
+        { note: 'F#5', duration: eighth },
+        { note: 'E5', duration: eighth },
+        { note: 'F#5', duration: eighth },
+        { note: 'G#5', duration: quarter },
+        // Ending phrase
+        { note: 'A5', duration: eighth },
+        { note: 'G#5', duration: eighth },
+        { note: 'F#5', duration: eighth },
+        { note: 'E5', duration: eighth },
+        { note: 'F#5', duration: quarter },
+        { note: 'E5', duration: quarter },
+    ];
+
+    // Harmony/Counter melody (Pulse 2 channel)
+    const harmony = [
+        // Supporting the intro
+        { note: 'B4', duration: quarter },
+        { note: 'A4', duration: quarter },
+        { note: 'E4', duration: quarter },
+        { note: 'F#4', duration: quarter },
+        // Phrase 2 harmony
+        { note: 'G#4', duration: quarter },
+        { note: 'A4', duration: quarter },
+        { note: 'B4', duration: quarter },
+        { note: 'A4', duration: quarter },
+        // Phrase 3 harmony
+        { note: 'E4', duration: quarter },
+        { note: 'F#4', duration: quarter },
+        { note: 'G#4', duration: quarter },
+        { note: 'A4', duration: quarter },
+        // Phrase 4 harmony
+        { note: 'F#4', duration: quarter },
+        { note: 'E4', duration: quarter },
+        { note: 'D#4', duration: quarter },
+        { note: 'E4', duration: quarter },
+        // Second section
+        { note: 'E4', duration: quarter },
+        { note: 'F#4', duration: quarter },
+        { note: 'G#4', duration: quarter },
+        // Ending
+        { note: 'A4', duration: quarter },
+        { note: 'G#4', duration: quarter },
+        { note: 'E4', duration: half },
+    ];
+
+    // Bass line (Wave channel style)
+    const bassPattern = [
+        { note: 'E3', duration: eighth },
+        { note: 'E3', duration: eighth },
+        { note: 'B3', duration: eighth },
+        { note: 'E3', duration: eighth },
+        { note: 'A3', duration: eighth },
+        { note: 'A3', duration: eighth },
+        { note: 'E3', duration: eighth },
+        { note: 'A3', duration: eighth },
+        { note: 'G#3', duration: eighth },
+        { note: 'G#3', duration: eighth },
+        { note: 'E3', duration: eighth },
+        { note: 'G#3', duration: eighth },
+        { note: 'F#3', duration: eighth },
+        { note: 'F#3', duration: eighth },
+        { note: 'B3', duration: eighth },
+        { note: 'F#3', duration: eighth },
+        // Repeat with variation
+        { note: 'E3', duration: eighth },
+        { note: 'B3', duration: eighth },
+        { note: 'E3', duration: eighth },
+        { note: 'B3', duration: eighth },
+        { note: 'A3', duration: eighth },
+        { note: 'E3', duration: eighth },
+        { note: 'A3', duration: eighth },
+        { note: 'E3', duration: eighth },
+        { note: 'G#3', duration: eighth },
+        { note: 'E3', duration: eighth },
+        { note: 'G#3', duration: eighth },
+        { note: 'B3', duration: eighth },
+        { note: 'F#3', duration: eighth },
+        { note: 'E3', duration: eighth },
+        { note: 'F#3', duration: quarter },
+        { note: 'E3', duration: quarter },
+    ];
+
+    // Calculate total loop duration from melody
     let totalDuration = 0;
     melody.forEach(n => totalDuration += n.duration);
 
-    // Bass line - simple bouncy rhythm
-    const bassPattern = [
-        { note: 'E3', duration: 0.3 },
-        { note: 'E3', duration: 0.15 },
-        { note: 'G3', duration: 0.15 },
-        { note: 'A3', duration: 0.3 },
-        { note: 'G3', duration: 0.3 },
-    ];
-    const bassFreqs = {
-        'E3': 164.81, 'G3': 196.00, 'A3': 220.00, 'B3': 246.94, 'D3': 146.83
-    };
-
-    let bassDuration = 0;
-    bassPattern.forEach(n => bassDuration += n.duration);
-
-    // Schedule melody loop
-    let melodyTime = audioContext.currentTime;
     const loopInterval = totalDuration * 1000;
 
     function scheduleMelody() {
         if (!musicEnabled || !musicNodes) return;
 
-        let time = audioContext.currentTime + 0.1;
+        let time = audioContext.currentTime + 0.05;
         melody.forEach(noteData => {
             const osc = audioContext.createOscillator();
             const noteGain = audioContext.createGain();
 
-            osc.type = 'square'; // Chiptune sound
+            // Use 25% duty cycle square wave for authentic Game Boy sound
+            osc.type = 'square';
             osc.frequency.value = noteFreqs[noteData.note];
 
             osc.connect(noteGain);
             noteGain.connect(musicGain);
 
-            // Quick attack, sustain, quick release for bouncy feel
+            // Sharp attack, slight decay for that chiptune punch
             noteGain.gain.setValueAtTime(0, time);
-            noteGain.gain.linearRampToValueAtTime(0.6, time + 0.02);
-            noteGain.gain.setValueAtTime(0.5, time + noteData.duration * 0.7);
-            noteGain.gain.linearRampToValueAtTime(0, time + noteData.duration);
+            noteGain.gain.linearRampToValueAtTime(0.5, time + 0.015);
+            noteGain.gain.setValueAtTime(0.4, time + noteData.duration * 0.6);
+            noteGain.gain.linearRampToValueAtTime(0, time + noteData.duration * 0.95);
 
             osc.start(time);
-            osc.stop(time + noteData.duration + 0.05);
+            osc.stop(time + noteData.duration);
+
+            time += noteData.duration;
+        });
+    }
+
+    function scheduleHarmony() {
+        if (!musicEnabled || !musicNodes) return;
+
+        let time = audioContext.currentTime + 0.05;
+        const harmonyGain = audioContext.createGain();
+        harmonyGain.gain.value = 0.6; // Slightly quieter than lead
+        harmonyGain.connect(musicGain);
+
+        harmony.forEach(noteData => {
+            const osc = audioContext.createOscillator();
+            const noteGain = audioContext.createGain();
+
+            // 12.5% duty cycle feel (different pulse width)
+            osc.type = 'square';
+            osc.frequency.value = noteFreqs[noteData.note];
+
+            osc.connect(noteGain);
+            noteGain.connect(harmonyGain);
+
+            noteGain.gain.setValueAtTime(0, time);
+            noteGain.gain.linearRampToValueAtTime(0.35, time + 0.02);
+            noteGain.gain.setValueAtTime(0.3, time + noteData.duration * 0.7);
+            noteGain.gain.linearRampToValueAtTime(0, time + noteData.duration * 0.9);
+
+            osc.start(time);
+            osc.stop(time + noteData.duration);
 
             time += noteData.duration;
         });
@@ -372,8 +480,11 @@ function startBackgroundMusic() {
     function scheduleBass() {
         if (!musicEnabled || !musicNodes) return;
 
-        let time = audioContext.currentTime + 0.1;
-        const repetitions = Math.ceil(totalDuration / bassDuration);
+        let time = audioContext.currentTime + 0.05;
+        let bassDuration = 0;
+        bassPattern.forEach(n => bassDuration += n.duration);
+        
+        const repetitions = Math.ceil(totalDuration / bassDuration) + 1;
 
         for (let rep = 0; rep < repetitions; rep++) {
             bassPattern.forEach(noteData => {
@@ -381,15 +492,17 @@ function startBackgroundMusic() {
                     const osc = audioContext.createOscillator();
                     const noteGain = audioContext.createGain();
 
-                    osc.type = 'triangle'; // Softer bass
-                    osc.frequency.value = bassFreqs[noteData.note] || 164.81;
+                    // Triangle wave for bass - authentic Game Boy wave channel
+                    osc.type = 'triangle';
+                    osc.frequency.value = noteFreqs[noteData.note] || 164.81;
 
                     osc.connect(noteGain);
                     noteGain.connect(musicGain);
 
                     noteGain.gain.setValueAtTime(0, time);
-                    noteGain.gain.linearRampToValueAtTime(0.4, time + 0.02);
-                    noteGain.gain.linearRampToValueAtTime(0, time + noteData.duration * 0.9);
+                    noteGain.gain.linearRampToValueAtTime(0.5, time + 0.01);
+                    noteGain.gain.setValueAtTime(0.45, time + noteData.duration * 0.5);
+                    noteGain.gain.linearRampToValueAtTime(0, time + noteData.duration * 0.85);
 
                     osc.start(time);
                     osc.stop(time + noteData.duration);
@@ -399,9 +512,66 @@ function startBackgroundMusic() {
         }
     }
 
+    // Add some noise channel percussion for rhythm
+    function schedulePercussion() {
+        if (!musicEnabled || !musicNodes) return;
+
+        const percGain = audioContext.createGain();
+        percGain.gain.value = 0.08;
+        percGain.connect(musicGain);
+
+        let time = audioContext.currentTime + 0.05;
+        const beatInterval = eighth;
+        const beats = Math.floor(totalDuration / beatInterval);
+
+        for (let i = 0; i < beats; i++) {
+            // Hi-hat on every beat, snare on 2 and 4
+            const isSnare = (i % 4 === 2);
+            
+            const bufferSize = 4096;
+            const noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let j = 0; j < bufferSize; j++) {
+                output[j] = Math.random() * 2 - 1;
+            }
+
+            const noise = audioContext.createBufferSource();
+            noise.buffer = noiseBuffer;
+
+            const noiseGain = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+            
+            if (isSnare) {
+                filter.type = 'bandpass';
+                filter.frequency.value = 1500;
+                filter.Q.value = 0.5;
+                noiseGain.gain.setValueAtTime(0, time);
+                noiseGain.gain.linearRampToValueAtTime(0.3, time + 0.005);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.08);
+            } else {
+                filter.type = 'highpass';
+                filter.frequency.value = 8000;
+                noiseGain.gain.setValueAtTime(0, time);
+                noiseGain.gain.linearRampToValueAtTime(0.15, time + 0.002);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.03);
+            }
+
+            noise.connect(filter);
+            filter.connect(noiseGain);
+            noiseGain.connect(percGain);
+
+            noise.start(time);
+            noise.stop(time + 0.1);
+
+            time += beatInterval;
+        }
+    }
+
     // Initial schedule
     scheduleMelody();
+    scheduleHarmony();
     scheduleBass();
+    schedulePercussion();
 
     // Create loop timer
     const loopTimer = setInterval(() => {
@@ -410,7 +580,9 @@ function startBackgroundMusic() {
             return;
         }
         scheduleMelody();
+        scheduleHarmony();
         scheduleBass();
+        schedulePercussion();
     }, loopInterval);
 
     // Store references for cleanup
