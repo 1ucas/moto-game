@@ -1850,7 +1850,8 @@ function updateMarkers(delta) {
     [...restaurants, ...customers].forEach(marker => {
         if (marker.userData.iconGroup) {
             marker.userData.iconGroup.position.y = 4 + Math.sin(time * 2) * 0.3;
-            marker.userData.iconGroup.rotation.y = time;
+            // Billboard effect - make emoji always face the camera
+            marker.userData.iconGroup.lookAt(camera.position);
         }
     });
 }
