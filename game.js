@@ -248,6 +248,13 @@ function updateSoundToggleUI() {
         btn.textContent = engineSoundEnabled ? '🔊 Som' : '🔇 Som';
         btn.classList.toggle('muted', !engineSoundEnabled);
     }
+
+    // Update sound menu button
+    const menuBtn = document.getElementById('engine-sound-menu-btn');
+    if (menuBtn) {
+        menuBtn.textContent = engineSoundEnabled ? '🔊 Som do Motor' : '🔇 Som do Motor';
+        menuBtn.classList.toggle('muted', !engineSoundEnabled);
+    }
 }
 
 function updateMusicToggleUI() {
@@ -256,6 +263,13 @@ function updateMusicToggleUI() {
         btn.textContent = musicEnabled ? '🎵 Música' : '🎵 Música';
         btn.classList.toggle('muted', !musicEnabled);
     }
+
+    // Update sound menu button
+    const menuBtn = document.getElementById('music-menu-btn');
+    if (menuBtn) {
+        menuBtn.textContent = musicEnabled ? '🎵 Música de Fundo' : '🔇 Música de Fundo';
+        menuBtn.classList.toggle('muted', !musicEnabled);
+    }
 }
 
 function initSoundPreferences() {
@@ -263,6 +277,23 @@ function initSoundPreferences() {
     musicEnabled = getMusicPreference();
     updateSoundToggleUI();
     updateMusicToggleUI();
+}
+
+function openSoundMenu() {
+    const soundMenu = document.getElementById('sound-menu');
+    if (soundMenu) {
+        soundMenu.style.display = 'flex';
+        // Update button states when opening menu
+        updateSoundToggleUI();
+        updateMusicToggleUI();
+    }
+}
+
+function closeSoundMenu() {
+    const soundMenu = document.getElementById('sound-menu');
+    if (soundMenu) {
+        soundMenu.style.display = 'none';
+    }
 }
 
 // ============= BACKGROUND MUSIC =============
@@ -1474,6 +1505,13 @@ function createMarker(color, emoji, isRestaurant) {
 function setupControls() {
     document.addEventListener('keydown', (e) => {
         switch (e.code) {
+            case 'Escape':
+                // Close sound menu if open
+                const soundMenu = document.getElementById('sound-menu');
+                if (soundMenu && soundMenu.style.display === 'flex') {
+                    closeSoundMenu();
+                }
+                break;
             case 'KeyW':
             case 'ArrowUp':
                 keys.forward = true;
