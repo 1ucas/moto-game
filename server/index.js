@@ -904,14 +904,17 @@ app.post('/deploy', express.raw({ type: 'application/json' }), async (req, res) 
     console.log('🚀 Deploy triggered by push to main');
     console.log(`   Commit: ${payload.after?.substring(0, 7)} by ${payload.pusher?.name}`);
 
-    // Respond immediately, deploy in background
+    // Respond immediately to GitHub
     res.send('OK - deploying');
 
-    try {
-        await runDeploy();
-    } catch (error) {
-        // Error already logged in runDeploy
-    }
+    // Delay deploy to ensure response is sent before pm2 restart kills this process
+    setTimeout(async () => {
+        try {
+            await runDeploy();
+        } catch (error) {
+            // Error already logged in runDeploy
+        }
+    }, 1000);
 });
 
 // ============================================================
