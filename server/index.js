@@ -72,21 +72,29 @@ const CUSTOMERS = [
 // SERVER SETUP
 // ============================================================
 
-// Deploy helper functions (must be defined before route)
-function verifyGitHubSignature(rawBody, signature) {
+// Deploy helper functions
+function verifyGitHubSignature(rawBody, signatureHeader) {
     if (!WEBHOOK_SECRET) {
-        console.warn('⚠️  WEBHOOK_SECRET not configured - skipping signature verification');
-        return true; // Allow in dev mode without secret
+        console.warn('⚠️  WEBHOOK_SECRET not configured - refusing to verify webhook');
+        return false;
     }
-    if (!signature) return false;
-    
-    // Handle both Buffer and string
-    const payload = Buffer.isBuffer(rawBody) ? rawBody : String(rawBody);
-    
-    const hmac = crypto.createHmac('sha256', WEBHOOK_SECRET);
-    const digest = 'sha256=' + hmac.update(payload).digest('hex');
+
+    if (!signatureHeader || typeof signatureHeader !== 'string') return false;
+    if (!Buffer.isBuffer(rawBody)) return false;
+
+    const [algo, providedHex] = signatureHeader.split('=');
+    if (algo !== 'sha256' || !providedHex) return false;
+
+    const expectedHex = crypto
+        .createHmac('sha256', WEBHOOK_SECRET)
+        .update(rawBody)
+        .digest('hex');
+
     try {
-        return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+        const expected = Buffer.from(expectedHex, 'hex');
+        const provided = Buffer.from(providedHex, 'hex');
+        if (expected.length !== provided.length) return false;
+        return crypto.timingSafeEqual(provided, expected);
     } catch {
         return false;
     }
@@ -128,25 +136,30 @@ app.use(cors({
     credentials: true
 }));
 
-// Deploy webhook MUST be before express.json() to get raw body for signature verification
-app.post('/deploy', express.raw({ type: 'application/json' }), (req, res) => {
-    try {
-        const signature = req.headers['x-hub-signature-256'];
+// Capture raw JSON body for webhook signature verification.
+// This avoids ordering pitfalls (we can verify using req.rawBody while still having req.body parsed).
+app.use(express.json({
+    limit: process.env.JSON_BODY_LIMIT || '2mb',
+    verify: (req, _res, buf) => {
+        if (buf && buf.length) req.rawBody = buf;
+    }
+}));
+app.use(cookieParser(COOKIE_SECRET));
 
-        // Verify signature (pass raw body for HMAC)
-        if (!verifyGitHubSignature(req.body, signature)) {
-            console.warn('🚫 Deploy webhook: Invalid signature');
+app.post('/deploy', (req, res) => {
+    try {
+        const deliveryId = req.headers['x-github-delivery'];
+        const signature256 = req.headers['x-hub-signature-256'];
+
+        if (!verifyGitHubSignature(req.rawBody, signature256)) {
+            console.warn(`🚫 Deploy webhook: Invalid signature (delivery=${deliveryId || 'n/a'})`);
             return res.status(401).send('Unauthorized');
         }
 
-        // Parse payload - handle both Buffer and already-parsed Object
-        let payload;
-        if (Buffer.isBuffer(req.body)) {
-            payload = JSON.parse(req.body.toString());
-        } else if (typeof req.body === 'object') {
-            payload = req.body;
-        } else {
-            payload = JSON.parse(req.body);
+        const payload = req.body;
+        if (!payload || typeof payload !== 'object') {
+            console.warn(`🚫 Deploy webhook: Missing/invalid JSON body (delivery=${deliveryId || 'n/a'})`);
+            return res.status(400).send('Invalid JSON payload');
         }
 
         // Only deploy on pushes to main branch
@@ -156,6 +169,7 @@ app.post('/deploy', express.raw({ type: 'application/json' }), (req, res) => {
         }
 
         console.log('🚀 Deploy triggered by push to main');
+        console.log(`   Delivery: ${deliveryId || 'n/a'}`);
         console.log(`   Commit: ${payload.after?.substring(0, 7)} by ${payload.pusher?.name}`);
 
         // Respond immediately to GitHub
@@ -170,9 +184,6 @@ app.post('/deploy', express.raw({ type: 'application/json' }), (req, res) => {
         res.status(500).send('Internal error');
     }
 });
-
-app.use(express.json());
-app.use(cookieParser(COOKIE_SECRET));
 
 // Serve static frontend files (makes cookies first-party)
 app.use(express.static(path.join(__dirname, '..')));
