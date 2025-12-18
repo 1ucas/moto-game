@@ -73,12 +73,16 @@ const CUSTOMERS = [
 // ============================================================
 
 // Deploy helper functions (must be defined before route)
-function verifyGitHubSignature(payload, signature) {
+function verifyGitHubSignature(rawBody, signature) {
     if (!WEBHOOK_SECRET) {
         console.warn('⚠️  WEBHOOK_SECRET not configured - skipping signature verification');
         return true; // Allow in dev mode without secret
     }
     if (!signature) return false;
+    
+    // Handle both Buffer and string
+    const payload = Buffer.isBuffer(rawBody) ? rawBody : String(rawBody);
+    
     const hmac = crypto.createHmac('sha256', WEBHOOK_SECRET);
     const digest = 'sha256=' + hmac.update(payload).digest('hex');
     try {
@@ -126,37 +130,45 @@ app.use(cors({
 
 // Deploy webhook MUST be before express.json() to get raw body for signature verification
 app.post('/deploy', express.raw({ type: 'application/json' }), (req, res) => {
-    const signature = req.headers['x-hub-signature-256'];
-
-    // Verify signature
-    if (!verifyGitHubSignature(req.body, signature)) {
-        console.warn('🚫 Deploy webhook: Invalid signature');
-        return res.status(401).send('Unauthorized');
-    }
-
-    let payload;
     try {
-        payload = JSON.parse(req.body);
-    } catch {
-        return res.status(400).send('Invalid JSON payload');
+        const signature = req.headers['x-hub-signature-256'];
+
+        // Verify signature (pass raw body for HMAC)
+        if (!verifyGitHubSignature(req.body, signature)) {
+            console.warn('🚫 Deploy webhook: Invalid signature');
+            return res.status(401).send('Unauthorized');
+        }
+
+        // Parse payload - handle both Buffer and already-parsed Object
+        let payload;
+        if (Buffer.isBuffer(req.body)) {
+            payload = JSON.parse(req.body.toString());
+        } else if (typeof req.body === 'object') {
+            payload = req.body;
+        } else {
+            payload = JSON.parse(req.body);
+        }
+
+        // Only deploy on pushes to main branch
+        if (payload.ref !== 'refs/heads/main') {
+            console.log(`ℹ️  Ignoring push to ${payload.ref}`);
+            return res.send('OK - ignored (not main branch)');
+        }
+
+        console.log('🚀 Deploy triggered by push to main');
+        console.log(`   Commit: ${payload.after?.substring(0, 7)} by ${payload.pusher?.name}`);
+
+        // Respond immediately to GitHub
+        res.send('OK - deploying');
+
+        // Delay deploy to ensure response is sent before pm2 restart kills this process
+        setTimeout(() => {
+            runDeploy().catch(() => {}); // Error already logged in runDeploy
+        }, 1000);
+    } catch (error) {
+        console.error('❌ Deploy webhook error:', error);
+        res.status(500).send('Internal error');
     }
-
-    // Only deploy on pushes to main branch
-    if (payload.ref !== 'refs/heads/main') {
-        console.log(`ℹ️  Ignoring push to ${payload.ref}`);
-        return res.send('OK - ignored (not main branch)');
-    }
-
-    console.log('🚀 Deploy triggered by push to main');
-    console.log(`   Commit: ${payload.after?.substring(0, 7)} by ${payload.pusher?.name}`);
-
-    // Respond immediately to GitHub
-    res.send('OK - deploying');
-
-    // Delay deploy to ensure response is sent before pm2 restart kills this process
-    setTimeout(() => {
-        runDeploy().catch(() => {}); // Error already logged in runDeploy
-    }, 1000);
 });
 
 app.use(express.json());
