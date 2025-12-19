@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Food Rush - O Jogo!</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +27,11 @@
             touch-action: manipulation;
             /* Prevent iOS text size adjustment */
             -webkit-text-size-adjust: 100%;
+            /* Additional zoom prevention for Safari */
+            -webkit-text-size-adjust: none;
+            -moz-text-size-adjust: none;
+            -ms-text-size-adjust: none;
+            text-size-adjust: none;
         }
 
         :root {
@@ -50,6 +58,8 @@
             /* Prevent pull-to-refresh and overscroll */
             overscroll-behavior: none;
             touch-action: manipulation;
+            /* Force full viewport without browser UI on iOS */
+            -webkit-overflow-scrolling: touch;
         }
 
         body.game-active {
@@ -1741,6 +1751,49 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Prevent Safari zoom on double-tap -->
+    <script>
+        // Prevent double-tap zoom in Safari
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, { passive: false });
+
+        // Prevent pinch zoom gesture
+        document.addEventListener('gesturestart', function(event) {
+            event.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('gesturechange', function(event) {
+            event.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('gestureend', function(event) {
+            event.preventDefault();
+        }, { passive: false });
+
+        // Force viewport to stay at scale 1.0
+        document.addEventListener('touchmove', function(event) {
+            if (event.scale !== 1) {
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        // Additional Safari-specific fix to prevent zoom
+        window.addEventListener('load', function() {
+            // Force minimal-ui on Safari
+            if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+                // App is in standalone mode, no browser UI
+                document.body.style.height = '100vh';
+            }
+        });
+    </script>
+
     <!-- Socket.io (loaded dynamically when multiplayer is enabled) -->
     <script type="module" src="js/main.js"></script>
 </body>
