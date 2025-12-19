@@ -46,7 +46,7 @@ export function createStreets() {
                 markingMaterial
             );
             hDash.rotation.x = -Math.PI / 2;
-            hDash.position.set(d, 0.03, i * GRID_SPACING);
+            hDash.position.set(d, 0.04, i * GRID_SPACING);
             state.scene.add(hDash);
 
             const vDash = new THREE.Mesh(
@@ -54,7 +54,7 @@ export function createStreets() {
                 markingMaterial
             );
             vDash.rotation.x = -Math.PI / 2;
-            vDash.position.set(i * GRID_SPACING, 0.03, d);
+            vDash.position.set(i * GRID_SPACING, 0.04, d);
             state.scene.add(vDash);
         }
 
@@ -64,7 +64,7 @@ export function createStreets() {
             whiteMaterial
         );
         hEdge1.rotation.x = -Math.PI / 2;
-        hEdge1.position.set(0, 0.05, i * GRID_SPACING + STREET_WIDTH / 2 - 1);
+        hEdge1.position.set(0, 0.08, i * GRID_SPACING + STREET_WIDTH / 2 - 1);
         state.scene.add(hEdge1);
 
         const hEdge2 = hEdge1.clone();
@@ -76,7 +76,7 @@ export function createStreets() {
             whiteMaterial
         );
         vEdge1.rotation.x = -Math.PI / 2;
-        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.05, 0);
+        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.08, 0);
         state.scene.add(vEdge1);
 
         const vEdge2 = vEdge1.clone();
@@ -137,7 +137,7 @@ function addFlowerbed(cx, cz, flowerColors) {
         new THREE.MeshBasicMaterial({ color: 0x5d4037 })
     );
     bed.rotation.x = -Math.PI / 2;
-    bed.position.set(cx + (Math.random() - 0.5) * 20, 0.04, cz + (Math.random() - 0.5) * 20);
+    bed.position.set(cx + (Math.random() - 0.5) * 20, 0.06, cz + (Math.random() - 0.5) * 20);
     state.scene.add(bed);
 
     // Add flowers
@@ -175,7 +175,7 @@ function createMedians(flowerColors) {
                 medianMaterial
             );
             median.rotation.x = -Math.PI / 2;
-            median.position.set(cx, 0.03, cz);
+            median.position.set(cx, 0.06, cz);
             state.scene.add(median);
 
             // Add a small tree or flowers
