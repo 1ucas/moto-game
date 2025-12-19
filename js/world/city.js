@@ -54,7 +54,7 @@ export function createStreets() {
                 markingMaterial
             );
             vDash.rotation.x = -Math.PI / 2;
-            vDash.position.set(i * GRID_SPACING, 0.1, d);
+            vDash.position.set(i * GRID_SPACING, 0.12, d);
             state.scene.add(vDash);
         }
 
@@ -76,7 +76,7 @@ export function createStreets() {
             whiteMaterial
         );
         vEdge1.rotation.x = -Math.PI / 2;
-        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.15, 0);
+        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.17, 0);
         state.scene.add(vEdge1);
 
         const vEdge2 = vEdge1.clone();
