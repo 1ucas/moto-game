@@ -40,8 +40,19 @@ export function hideLeaderboard() {
     document.getElementById('leaderboard-screen').style.display = 'none';
 }
 
-export function requestLeaderboard() {
-    if (state.socket) {
+export async function requestLeaderboard() {
+    // Use socket if connected, otherwise fall back to REST API
+    if (state.socket && state.socket.connected) {
         state.socket.emit('get-leaderboard');
+    } else if (state.multiplayerServerUrl) {
+        try {
+            const response = await fetch(state.multiplayerServerUrl + '/api/leaderboard');
+            if (response.ok) {
+                const data = await response.json();
+                updateLeaderboard(data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch leaderboard:', error);
+        }
     }
 }

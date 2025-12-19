@@ -282,8 +282,8 @@ function init() {
 // These are called from HTML onclick handlers
 window.startMultiplayerGame = startMultiplayerGame;
 window.restartGame = restartGame;
-window.showLeaderboard = () => {
-    requestLeaderboard();
+window.showLeaderboard = async () => {
+    await requestLeaderboard();
     showLeaderboard();
 };
 window.hideLeaderboard = hideLeaderboard;
