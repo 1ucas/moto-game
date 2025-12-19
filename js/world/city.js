@@ -16,8 +16,18 @@ export function createGround() {
 
 export function createStreets() {
     const streetMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
-    const markingMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-    const whiteMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const markingMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffff00,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1
+    });
+    const whiteMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+        polygonOffsetUnits: -2
+    });
 
     // Create street grid
     for (let i = -2; i <= 2; i++) {
@@ -30,13 +40,13 @@ export function createStreets() {
         hStreet.position.set(0, 0.01, i * GRID_SPACING);
         state.scene.add(hStreet);
 
-        // Vertical streets (slightly above horizontal to prevent z-fighting at intersections)
+        // Vertical streets
         const vStreet = new THREE.Mesh(
             new THREE.PlaneGeometry(STREET_WIDTH, CONFIG.CITY_SIZE),
             streetMaterial
         );
         vStreet.rotation.x = -Math.PI / 2;
-        vStreet.position.set(i * GRID_SPACING, 0.02, 0);
+        vStreet.position.set(i * GRID_SPACING, 0.01, 0);
         state.scene.add(vStreet);
 
         // Center line markings (dashed yellow)
@@ -46,7 +56,7 @@ export function createStreets() {
                 markingMaterial
             );
             hDash.rotation.x = -Math.PI / 2;
-            hDash.position.set(d, 0.03, i * GRID_SPACING);
+            hDash.position.set(d, 0.04, i * GRID_SPACING);
             state.scene.add(hDash);
 
             const vDash = new THREE.Mesh(
@@ -64,7 +74,7 @@ export function createStreets() {
             whiteMaterial
         );
         hEdge1.rotation.x = -Math.PI / 2;
-        hEdge1.position.set(0, 0.05, i * GRID_SPACING + STREET_WIDTH / 2 - 1);
+        hEdge1.position.set(0, 0.08, i * GRID_SPACING + STREET_WIDTH / 2 - 1);
         state.scene.add(hEdge1);
 
         const hEdge2 = hEdge1.clone();
@@ -76,7 +86,7 @@ export function createStreets() {
             whiteMaterial
         );
         vEdge1.rotation.x = -Math.PI / 2;
-        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.06, 0);
+        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.08, 0);
         state.scene.add(vEdge1);
 
         const vEdge2 = vEdge1.clone();
