@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Food Rush - O Jogo!</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,6 +12,18 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            /* Prevent text selection on game elements */
+            -webkit-user-select: none;
+            user-select: none;
+            /* Prevent tap highlight on mobile */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            /* Prevent zooming on double-tap */
+            touch-action: manipulation;
+            /* Prevent iOS text size adjustment */
+            -webkit-text-size-adjust: 100%;
         }
 
         :root {
@@ -34,6 +46,10 @@
             position: fixed;
             width: 100%;
             height: 100%;
+            height: 100dvh; /* Dynamic viewport height for mobile */
+            /* Prevent pull-to-refresh and overscroll */
+            overscroll-behavior: none;
+            touch-action: manipulation;
         }
 
         body.game-active {
@@ -48,6 +64,13 @@
             position: relative;
             width: 100vw;
             height: 100vh;
+            height: 100dvh; /* Dynamic viewport height */
+            /* Safe area padding for notches and browser UI */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+            box-sizing: border-box;
         }
 
         canvas {
@@ -362,6 +385,9 @@
             justify-content: space-between;
             align-items: flex-start;
             padding: 20px 30px;
+            padding-top: calc(20px + env(safe-area-inset-top, 0px));
+            padding-left: calc(30px + env(safe-area-inset-left, 0px));
+            padding-right: calc(30px + env(safe-area-inset-right, 0px));
         }
 
         .score-panel {
@@ -475,7 +501,9 @@
         .speed-panel {
             position: absolute;
             bottom: 30px;
+            bottom: calc(30px + env(safe-area-inset-bottom, 0px));
             left: 30px;
+            left: calc(30px + env(safe-area-inset-left, 0px));
             background: rgba(255,255,255,0.95);
             border: 3px solid var(--ifood-red);
             border-radius: 20px;
@@ -502,7 +530,9 @@
         .minimap {
             position: absolute;
             bottom: 30px;
+            bottom: calc(30px + env(safe-area-inset-bottom, 0px));
             right: 30px;
+            right: calc(30px + env(safe-area-inset-right, 0px));
             width: 150px;
             height: 150px;
             background: rgba(240,240,240,0.95);
@@ -732,17 +762,20 @@
         .joystick-container {
             position: absolute;
             bottom: 30px;
+            bottom: calc(30px + env(safe-area-inset-bottom, 0px));
             pointer-events: auto;
             transition: left 0.3s ease, right 0.3s ease;
         }
 
         .joystick-container.position-left {
             left: 30px;
+            left: calc(30px + env(safe-area-inset-left, 0px));
             right: auto;
         }
 
         .joystick-container.position-right {
             right: 30px;
+            right: calc(30px + env(safe-area-inset-right, 0px));
             left: auto;
         }
 
@@ -797,12 +830,17 @@
                 width: 80px;
                 height: 80px;
                 bottom: 220px;
+                bottom: calc(220px + env(safe-area-inset-bottom, 0px));
                 right: 15px;
+                right: calc(15px + env(safe-area-inset-right, 0px));
             }
 
             /* Smaller HUD on mobile */
             .hud-top {
                 padding: 10px 15px;
+                padding-top: calc(10px + env(safe-area-inset-top, 0px));
+                padding-left: calc(15px + env(safe-area-inset-left, 0px));
+                padding-right: calc(15px + env(safe-area-inset-right, 0px));
             }
 
             .score-panel, .timer-panel {
@@ -821,8 +859,10 @@
             /* Repositioned and smaller orders panel on mobile - top right */
             .orders-panel {
                 top: 80px;
+                top: calc(80px + env(safe-area-inset-top, 0px));
                 bottom: auto;
                 right: 10px;
+                right: calc(10px + env(safe-area-inset-right, 0px));
                 transform: none;
                 max-width: 140px;
             }
@@ -1292,6 +1332,9 @@
             outline: none;
             text-align: center;
             transition: border-color 0.2s ease;
+            /* Allow text selection for input */
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         .name-input:focus {
@@ -1484,7 +1527,9 @@
         @media (max-width: 768px), (pointer: coarse) {
             .online-panel {
                 left: 10px;
+                left: calc(10px + env(safe-area-inset-left, 0px));
                 top: 80px;
+                top: calc(80px + env(safe-area-inset-top, 0px));
                 bottom: auto;
                 transform: none;
                 max-width: 150px;
