@@ -80,26 +80,40 @@ function verifyGitHubSignature(rawBody, signatureHeader) {
     }
 
     const signatureValue = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader;
-    if (!signatureValue || typeof signatureValue !== 'string') return false;
-    if (!Buffer.isBuffer(rawBody)) return false;
+    if (!signatureValue || typeof signatureValue !== 'string') {
+        console.warn('🔎 Webhook: missing or invalid signature header');
+        return false;
+    }
+    if (!Buffer.isBuffer(rawBody)) {
+        console.warn('🔎 Webhook: rawBody is not a Buffer, got:', typeof rawBody);
+        return false;
+    }
 
     const [algo, providedHex] = signatureValue.split('=');
-    if (algo !== 'sha256' || !providedHex) return false;
+    if (algo !== 'sha256' || !providedHex) {
+        console.warn('🔎 Webhook: invalid signature format, algo:', algo);
+        return false;
+    }
 
     try {
         const provided = Buffer.from(providedHex, 'hex');
         const expected = crypto.createHmac('sha256', WEBHOOK_SECRET).update(rawBody).digest();
-        if (expected.length !== provided.length) return false;
+        if (expected.length !== provided.length) {
+            console.warn('🔎 Webhook: signature length mismatch');
+            return false;
+        }
         const ok = crypto.timingSafeEqual(provided, expected);
-        if (!ok && process.env.DEBUG_WEBHOOK === '1') {
-            console.warn('🔎 Webhook signature mismatch', {
-                providedPrefix: providedHex.slice(0, 12),
+        if (!ok) {
+            console.warn('🔎 Webhook signature mismatch:', {
+                providedPrefix: providedHex.slice(0, 16) + '...',
+                expectedPrefix: expected.toString('hex').slice(0, 16) + '...',
                 rawBodyBytes: rawBody.length,
-                secretLength: String(WEBHOOK_SECRET).length,
+                secretLength: WEBHOOK_SECRET.length,
             });
         }
         return ok;
-    } catch {
+    } catch (err) {
+        console.warn('🔎 Webhook verification error:', err.message);
         return false;
     }
 }
