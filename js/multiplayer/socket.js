@@ -3,10 +3,11 @@
 
 import { state } from '../state.js';
 import { MP_USERNAME_KEY, MP_NAME_SET_KEY } from '../config.js';
-import { playPickupSound, playDeliverySound } from '../audio/effects.js';
+import { playPickupSound, playDeliverySound, playRecordSound } from '../audio/effects.js';
 import { showMessage, updateOrdersPanel } from '../ui/hud.js';
 import { addOtherPlayer, removeOtherPlayer, updateOtherPlayerPosition } from '../entities/players.js';
 import { generateNewOrder } from '../gameplay/orders.js';
+import { updateLeaderboard } from '../ui/leaderboard.js';
 
 // ============= USERNAME MANAGEMENT =============
 export function getPlayerUsername() {
@@ -339,6 +340,23 @@ function initSocketConnection() {
     // Round ended
     state.socket.on('round-ended', (data) => {
         console.log('Round ended:', data);
+        if (data.leaderboard) {
+            updateLeaderboard(data.leaderboard);
+
+            // Check if player made the leaderboard
+            const username = getPlayerUsername();
+            const playerInLeaderboard = data.leaderboard.some(
+                entry => entry.username === username && entry.score === data.finalScore
+            );
+
+            if (playerInLeaderboard && data.finalScore > 0) {
+                const badge = document.getElementById('new-record-badge');
+                if (badge) {
+                    badge.classList.add('visible');
+                    playRecordSound();
+                }
+            }
+        }
     });
 
     // New round started (after restart)
@@ -359,7 +377,7 @@ function initSocketConnection() {
 
     // Leaderboard data
     state.socket.on('leaderboard', (data) => {
-        console.log('Leaderboard:', data);
+        updateLeaderboard(data);
     });
 }
 

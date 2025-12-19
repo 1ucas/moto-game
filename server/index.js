@@ -468,7 +468,9 @@ function getLeaderboard(limit = 10) {
             `SELECT u.username, s.earnings as score, s.deliveries_completed as deliveries, s.ended_at as date
              FROM sessions s
              JOIN users u ON s.user_id = u.id
-             WHERE s.ended_at IS NOT NULL AND s.earnings > 0
+             WHERE s.ended_at IS NOT NULL
+               AND s.earnings > 0
+               AND date(s.ended_at) = date('now')
              ORDER BY s.earnings DESC
              LIMIT ?`,
             [limit],

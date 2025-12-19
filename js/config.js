@@ -20,8 +20,6 @@ export const STREET_WIDTH = 20; // Wide streets
 export const BLOCK_SIZE = GRID_SPACING - STREET_WIDTH; // Size of each city block
 
 // LocalStorage keys
-export const LEADERBOARD_KEY = 'ifoodRushLeaderboard';
-export const MAX_LEADERBOARD_ENTRIES = 10;
 export const JOYSTICK_POSITION_KEY = 'ifoodRushJoystickPosition';
 export const ENGINE_SOUND_KEY = 'ifoodRushEngineSound';
 export const MUSIC_KEY = 'ifoodRushMusic';

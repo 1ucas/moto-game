@@ -7,7 +7,6 @@ import { CONFIG } from './config.js';
 // Audio
 import { initAudio, stopEngineSound } from './audio/engine.js';
 import { startBackgroundMusic, stopBackgroundMusic } from './audio/music.js';
-import { playRecordSound } from './audio/effects.js';
 
 // World
 import { initScene, createLights, createSky, updateClouds, updateCamera, onWindowResize } from './world/scene.js';
@@ -28,8 +27,7 @@ import { updateMinimap } from './ui/minimap.js';
 import {
     showLeaderboard,
     hideLeaderboard,
-    addScoreToLeaderboard,
-    isNewRecord
+    requestLeaderboard
 } from './ui/leaderboard.js';
 import {
     initJoystickPosition,
@@ -136,21 +134,8 @@ function endGame() {
     document.getElementById('stat-deliveries').textContent = state.deliveriesCount;
     document.getElementById('stat-distance').textContent = (state.distanceTraveled / 1000).toFixed(1);
 
-    const isRecord = isNewRecord(state.score);
-    const newRecordBadge = document.getElementById('new-record-badge');
-
-    addScoreToLeaderboard({
-        score: state.score,
-        deliveries: state.deliveriesCount,
-        distance: parseFloat((state.distanceTraveled / 1000).toFixed(1))
-    });
-
-    if (isRecord && state.score > 0) {
-        newRecordBadge.classList.add('visible');
-        playRecordSound();
-    } else {
-        newRecordBadge.classList.remove('visible');
-    }
+    // Hide new record badge - will be shown when server confirms leaderboard position
+    document.getElementById('new-record-badge').classList.remove('visible');
 }
 
 function restartGame() {
@@ -297,7 +282,10 @@ function init() {
 // These are called from HTML onclick handlers
 window.startMultiplayerGame = startMultiplayerGame;
 window.restartGame = restartGame;
-window.showLeaderboard = showLeaderboard;
+window.showLeaderboard = () => {
+    requestLeaderboard();
+    showLeaderboard();
+};
 window.hideLeaderboard = hideLeaderboard;
 window.openNameModal = openNameModal;
 window.saveNameAndClose = saveNameAndClose;

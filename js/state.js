@@ -70,6 +70,9 @@ export const state = {
 
     // UI state
     lastAddedEntryDate: null,
+
+    // Leaderboard (from server)
+    leaderboard: [],
 };
 
 // Reset game state to initial values
