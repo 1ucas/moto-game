@@ -42,29 +42,29 @@ export function createStreets() {
         // Center line markings (dashed yellow)
         for (let d = -CONFIG.CITY_SIZE / 2; d < CONFIG.CITY_SIZE / 2; d += 8) {
             const hDash = new THREE.Mesh(
-                new THREE.PlaneGeometry(4, 0.3),
+                new THREE.PlaneGeometry(4, 1.0),
                 markingMaterial
             );
             hDash.rotation.x = -Math.PI / 2;
-            hDash.position.set(d, 0.1, i * GRID_SPACING);
+            hDash.position.set(d, 0.03, i * GRID_SPACING);
             state.scene.add(hDash);
 
             const vDash = new THREE.Mesh(
-                new THREE.PlaneGeometry(0.3, 4),
+                new THREE.PlaneGeometry(1.0, 4),
                 markingMaterial
             );
             vDash.rotation.x = -Math.PI / 2;
-            vDash.position.set(i * GRID_SPACING, 0.12, d);
+            vDash.position.set(i * GRID_SPACING, 0.03, d);
             state.scene.add(vDash);
         }
 
         // Edge lines (white)
         const hEdge1 = new THREE.Mesh(
-            new THREE.PlaneGeometry(CONFIG.CITY_SIZE, 0.2),
+            new THREE.PlaneGeometry(CONFIG.CITY_SIZE, 0.6),
             whiteMaterial
         );
         hEdge1.rotation.x = -Math.PI / 2;
-        hEdge1.position.set(0, 0.15, i * GRID_SPACING + STREET_WIDTH / 2 - 1);
+        hEdge1.position.set(0, 0.05, i * GRID_SPACING + STREET_WIDTH / 2 - 1);
         state.scene.add(hEdge1);
 
         const hEdge2 = hEdge1.clone();
@@ -72,11 +72,11 @@ export function createStreets() {
         state.scene.add(hEdge2);
 
         const vEdge1 = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.2, CONFIG.CITY_SIZE),
+            new THREE.PlaneGeometry(0.6, CONFIG.CITY_SIZE),
             whiteMaterial
         );
         vEdge1.rotation.x = -Math.PI / 2;
-        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.17, 0);
+        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.05, 0);
         state.scene.add(vEdge1);
 
         const vEdge2 = vEdge1.clone();
