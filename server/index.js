@@ -429,36 +429,42 @@ function endSession(player) {
     return new Promise((resolve, reject) => {
         const playTime = Math.floor((Date.now() - player.joinedAt) / 1000);
 
-        db.serialize(() => {
-            // Update session
-            db.run(
-                `UPDATE sessions SET
-                    ended_at = CURRENT_TIMESTAMP,
-                    earnings = ?,
-                    deliveries_completed = ?,
-                    deliveries_failed = ?,
-                    play_time = ?
-                WHERE id = ?`,
-                [player.money, player.deliveries, player.failed, playTime, player.sessionId],
-                (err) => {
-                    if (err) console.error('Error updating session:', err);
+        // Update session first, then user totals
+        db.run(
+            `UPDATE sessions SET
+                ended_at = CURRENT_TIMESTAMP,
+                earnings = ?,
+                deliveries_completed = ?,
+                deliveries_failed = ?,
+                play_time = ?
+            WHERE id = ?`,
+            [player.money, player.deliveries, player.failed, playTime, player.sessionId],
+            function(err) {
+                if (err) {
+                    console.error('Error updating session:', err);
+                    return reject(err);
                 }
-            );
 
-            // Update user totals
-            db.run(
-                `UPDATE users SET
-                    total_earnings = total_earnings + ?,
-                    total_deliveries = total_deliveries + ?,
-                    best_session_score = MAX(best_session_score, ?)
-                WHERE id = ?`,
-                [player.money, player.deliveries, player.money, player.userId],
-                (err) => {
-                    if (err) console.error('Error updating user:', err);
-                    resolve();
-                }
-            );
-        });
+                console.log(`Session ${player.sessionId} updated: earnings=${player.money}, deliveries=${player.deliveries}`);
+
+                // Update user totals
+                db.run(
+                    `UPDATE users SET
+                        total_earnings = total_earnings + ?,
+                        total_deliveries = total_deliveries + ?,
+                        best_session_score = MAX(best_session_score, ?)
+                    WHERE id = ?`,
+                    [player.money, player.deliveries, player.money, player.userId],
+                    (err) => {
+                        if (err) {
+                            console.error('Error updating user:', err);
+                            return reject(err);
+                        }
+                        resolve();
+                    }
+                );
+            }
+        );
     });
 }
 
@@ -470,13 +476,18 @@ function getLeaderboard(limit = 10) {
              JOIN users u ON s.user_id = u.id
              WHERE s.ended_at IS NOT NULL
                AND s.earnings > 0
-               AND date(s.ended_at) = date('now')
+               AND s.ended_at >= datetime('now', '-24 hours')
              ORDER BY s.earnings DESC
              LIMIT ?`,
             [limit],
             (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows || []);
+                if (err) {
+                    console.error('Error fetching leaderboard:', err);
+                    reject(err);
+                } else {
+                    console.log(`Leaderboard fetched: ${rows ? rows.length : 0} entries`);
+                    resolve(rows || []);
+                }
             }
         );
     });
