@@ -46,7 +46,7 @@ export function createStreets() {
                 markingMaterial
             );
             hDash.rotation.x = -Math.PI / 2;
-            hDash.position.set(d, 0.04, i * GRID_SPACING);
+            hDash.position.set(d, 0.1, i * GRID_SPACING);
             state.scene.add(hDash);
 
             const vDash = new THREE.Mesh(
@@ -54,7 +54,7 @@ export function createStreets() {
                 markingMaterial
             );
             vDash.rotation.x = -Math.PI / 2;
-            vDash.position.set(i * GRID_SPACING, 0.04, d);
+            vDash.position.set(i * GRID_SPACING, 0.1, d);
             state.scene.add(vDash);
         }
 
@@ -64,7 +64,7 @@ export function createStreets() {
             whiteMaterial
         );
         hEdge1.rotation.x = -Math.PI / 2;
-        hEdge1.position.set(0, 0.08, i * GRID_SPACING + STREET_WIDTH / 2 - 1);
+        hEdge1.position.set(0, 0.15, i * GRID_SPACING + STREET_WIDTH / 2 - 1);
         state.scene.add(hEdge1);
 
         const hEdge2 = hEdge1.clone();
@@ -76,7 +76,7 @@ export function createStreets() {
             whiteMaterial
         );
         vEdge1.rotation.x = -Math.PI / 2;
-        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.08, 0);
+        vEdge1.position.set(i * GRID_SPACING + STREET_WIDTH / 2 - 1, 0.15, 0);
         state.scene.add(vEdge1);
 
         const vEdge2 = vEdge1.clone();
