@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Food Rush - O Jogo!</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +27,11 @@
             touch-action: manipulation;
             /* Prevent iOS text size adjustment */
             -webkit-text-size-adjust: 100%;
+            /* Additional zoom prevention for Safari */
+            -webkit-text-size-adjust: none;
+            -moz-text-size-adjust: none;
+            -ms-text-size-adjust: none;
+            text-size-adjust: none;
         }
 
         :root {
@@ -50,6 +58,8 @@
             /* Prevent pull-to-refresh and overscroll */
             overscroll-behavior: none;
             touch-action: manipulation;
+            /* Force full viewport without browser UI on iOS */
+            -webkit-overflow-scrolling: touch;
         }
 
         body.game-active {
@@ -1325,7 +1335,7 @@
             width: 100%;
             padding: 15px 20px;
             font-family: 'Outfit', sans-serif;
-            font-size: 1.2rem;
+            font-size: max(16px, 1.2rem); /* Prevent iOS auto-zoom on focus */
             font-weight: 600;
             border: 3px solid #ddd;
             border-radius: 15px;
@@ -1741,6 +1751,93 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Prevent Safari zoom - Modern iOS approach -->
+    <script>
+        (function() {
+            'use strict';
+
+            // Prevent double-tap zoom in Safari (iOS 10+ compatible)
+            let lastTouchEnd = 0;
+            let lastTouchEndTarget = null;
+
+            document.addEventListener('touchend', function(event) {
+                const now = Date.now();
+                const target = event.target;
+
+                // Prevent double-tap zoom
+                if (now - lastTouchEnd <= 300 && target === lastTouchEndTarget) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                lastTouchEnd = now;
+                lastTouchEndTarget = target;
+            }, { passive: false, capture: true });
+
+            // Prevent pinch zoom gesture (all gesture events)
+            const preventGesture = function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+            };
+
+            document.addEventListener('gesturestart', preventGesture, { passive: false, capture: true });
+            document.addEventListener('gesturechange', preventGesture, { passive: false, capture: true });
+            document.addEventListener('gestureend', preventGesture, { passive: false, capture: true });
+
+            // Prevent multi-touch zoom
+            document.addEventListener('touchstart', function(event) {
+                if (event.touches.length > 1) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }, { passive: false, capture: true });
+
+            // Force viewport to stay at scale 1.0 during touch
+            document.addEventListener('touchmove', function(event) {
+                if (event.scale && event.scale !== 1) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }, { passive: false, capture: true });
+
+            // Prevent mousewheel zoom (desktop browsers and some iOS gestures)
+            document.addEventListener('wheel', function(event) {
+                if (event.ctrlKey || event.metaKey) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            }, { passive: false, capture: true });
+
+            // Restore viewport scale on orientation change or resize
+            const resetViewport = function() {
+                const viewport = document.querySelector('meta[name=viewport]');
+                if (viewport) {
+                    // Force reset by temporarily changing and restoring
+                    const originalContent = viewport.getAttribute('content');
+                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no');
+                }
+            };
+
+            window.addEventListener('orientationchange', resetViewport);
+            window.addEventListener('resize', resetViewport);
+
+            // Additional Safari-specific fix
+            window.addEventListener('load', function() {
+                resetViewport();
+
+                // Force minimal-ui on Safari
+                if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+                    // App is in standalone mode, no browser UI
+                    document.body.style.height = '100vh';
+                }
+
+                // Prevent iOS Safari from adjusting font sizes
+                document.body.style.webkitTextSizeAdjust = 'none';
+            });
+        })();
+    </script>
+
     <!-- Socket.io (loaded dynamically when multiplayer is enabled) -->
     <script type="module" src="js/main.js"></script>
 </body>
