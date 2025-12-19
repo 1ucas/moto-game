@@ -154,10 +154,18 @@ app.use(cors({
     credentials: true
 }));
 
-// Deploy webhook route - MUST be before express.json() to get raw body for signature verification
-app.post('/deploy', express.raw({ type: 'application/json' }), (req, res) => {
+// JSON body parser - captures raw body for webhook signature verification
+app.use(express.json({
+    limit: process.env.JSON_BODY_LIMIT || '2mb',
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
+app.use(cookieParser(COOKIE_SECRET));
+
+// GitHub webhook for auto-deploy
+app.post('/deploy', (req, res) => {
     try {
-        const rawBody = req.body; // With express.raw(), this is a Buffer
         const deliveryId = req.headers['x-github-delivery'];
         const signature256 = req.headers['x-hub-signature-256'];
         const eventName = req.headers['x-github-event'];
@@ -166,19 +174,12 @@ app.post('/deploy', express.raw({ type: 'application/json' }), (req, res) => {
             return res.send('OK - ignored (not push event)');
         }
 
-        if (!verifyGitHubSignature(rawBody, signature256)) {
+        if (!verifyGitHubSignature(req.rawBody, signature256)) {
             console.warn(`🚫 Deploy webhook: Invalid signature (delivery=${deliveryId || 'n/a'})`);
             return res.status(401).send('Unauthorized');
         }
 
-        // Parse JSON after signature verification
-        let payload;
-        try {
-            payload = JSON.parse(rawBody.toString());
-        } catch (parseErr) {
-            console.warn(`🚫 Deploy webhook: Invalid JSON (delivery=${deliveryId || 'n/a'})`);
-            return res.status(400).send('Invalid JSON payload');
-        }
+        const payload = req.body;
 
         // Only deploy on pushes to main branch
         if (payload.ref !== 'refs/heads/main') {
@@ -202,10 +203,6 @@ app.post('/deploy', express.raw({ type: 'application/json' }), (req, res) => {
         res.status(500).send('Internal error');
     }
 });
-
-// JSON body parser for all other routes
-app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '2mb' }));
-app.use(cookieParser(COOKIE_SECRET));
 
 // Serve static frontend files (makes cookies first-party)
 app.use(express.static(path.join(__dirname, '..')));
