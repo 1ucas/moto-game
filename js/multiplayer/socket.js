@@ -291,9 +291,15 @@ function initSocketConnection() {
 
     // Player stats updated
     state.socket.on('player-stats-updated', (data) => {
+        console.log('player-stats-updated received:', data);
+        console.log('otherPlayers keys:', Object.keys(state.otherPlayers));
+
         if (state.otherPlayers[data.id]) {
+            console.log('Updating player', data.id, 'money:', state.otherPlayers[data.id].data.money, '->', data.money);
             state.otherPlayers[data.id].data.money = data.money;
             state.otherPlayers[data.id].data.deliveries = data.deliveries;
+        } else {
+            console.log('Player', data.id, 'not found in otherPlayers (might be self)');
         }
         updateOnlinePlayersUI();
     });
