@@ -115,6 +115,8 @@ export function updateOtherPlayers() {
 export function addOtherPlayer(playerData) {
     if (state.otherPlayers[playerData.id]) return;
 
+    console.log('addOtherPlayer - received data:', playerData);
+
     const mesh = createOtherPlayerMesh(playerData);
     state.scene.add(mesh);
 
@@ -124,7 +126,7 @@ export function addOtherPlayer(playerData) {
         targetPosition: playerData.position || { x: 0, z: 0, rotation: 0 }
     };
 
-    console.log('Added player:', playerData.username);
+    console.log('Added player:', playerData.username, 'with money:', playerData.money);
 }
 
 export function removeOtherPlayer(playerId) {
