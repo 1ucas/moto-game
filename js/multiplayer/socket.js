@@ -298,6 +298,7 @@ function initSocketConnection() {
             console.log('Updating player', data.id, 'money:', state.otherPlayers[data.id].data.money, '->', data.money);
             state.otherPlayers[data.id].data.money = data.money;
             state.otherPlayers[data.id].data.deliveries = data.deliveries;
+            console.log('After update - player data:', state.otherPlayers[data.id].data);
         } else {
             console.log('Player', data.id, 'not found in otherPlayers (might be self)');
         }
