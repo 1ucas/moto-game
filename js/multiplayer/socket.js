@@ -6,7 +6,6 @@ import { MP_USERNAME_KEY, MP_NAME_SET_KEY } from '../config.js';
 import { playPickupSound, playDeliverySound, playRecordSound } from '../audio/effects.js';
 import { showMessage, updateOrdersPanel } from '../ui/hud.js';
 import { addOtherPlayer, removeOtherPlayer, updateOtherPlayerPosition } from '../entities/players.js';
-import { generateNewOrder } from '../gameplay/orders.js';
 import { updateLeaderboard } from '../ui/leaderboard.js';
 
 // ============= USERNAME MANAGEMENT =============
@@ -308,6 +307,13 @@ function initSocketConnection() {
     // New delivery assigned
     state.socket.on('new-delivery', (delivery) => {
         console.log('Server assigned delivery:', delivery);
+        state.currentOrder = {
+            restaurant: delivery.restaurant.name,
+            restaurantEmoji: delivery.restaurant.emoji,
+            customer: delivery.customer.name,
+            customerEmoji: delivery.customer.emoji
+        };
+        updateOrdersPanel();
     });
 
     // Pickup success
@@ -333,8 +339,7 @@ function initSocketConnection() {
         showMessage(msg.emoji, msg.text, `+R$ ${data.reward},00`);
 
         state.hasFood = false;
-        state.currentOrder = null;
-        generateNewOrder();
+        // Note: currentOrder will be set by the 'new-delivery' event from server
     });
 
     // Round ended
