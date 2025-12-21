@@ -9,6 +9,20 @@ import { addOtherPlayer, removeOtherPlayer, updateOtherPlayerPosition } from '..
 import { generateNewOrder } from '../gameplay/orders.js';
 import { updateLeaderboard } from '../ui/leaderboard.js';
 
+// Queue for pending stats updates (handles race condition when player-stats-updated arrives before init)
+const pendingStatsUpdates = {};
+
+// Apply any pending stats updates for a player (called after player is added)
+function applyPendingStatsUpdates(playerId) {
+    if (pendingStatsUpdates[playerId] && state.otherPlayers[playerId]) {
+        const pending = pendingStatsUpdates[playerId];
+        console.log('Applying pending stats for player', playerId, ':', pending);
+        state.otherPlayers[playerId].data.money = pending.money;
+        state.otherPlayers[playerId].data.deliveries = pending.deliveries;
+        delete pendingStatsUpdates[playerId];
+    }
+}
+
 // ============= USERNAME MANAGEMENT =============
 export function getPlayerUsername() {
     return localStorage.getItem(MP_USERNAME_KEY) || 'Entregador';
@@ -248,9 +262,10 @@ function initSocketConnection() {
     state.socket.on('init', (data) => {
         state.myPlayerId = data.playerId;
 
-        // Add existing players
+        // Add existing players and apply any pending stats updates
         data.otherPlayers.forEach(playerData => {
             addOtherPlayer(playerData);
+            applyPendingStatsUpdates(playerData.id);
         });
 
         // Set current delivery from server
@@ -275,12 +290,15 @@ function initSocketConnection() {
     // New player joined
     state.socket.on('player-joined', (playerData) => {
         addOtherPlayer(playerData);
+        applyPendingStatsUpdates(playerData.id);
         updateOnlinePlayersUI();
     });
 
     // Player left
     state.socket.on('player-left', (playerId) => {
         removeOtherPlayer(playerId);
+        // Clean up any pending stats for this player
+        delete pendingStatsUpdates[playerId];
         updateOnlinePlayersUI();
     });
 
@@ -299,8 +317,12 @@ function initSocketConnection() {
             state.otherPlayers[data.id].data.money = data.money;
             state.otherPlayers[data.id].data.deliveries = data.deliveries;
             console.log('After update - player data:', state.otherPlayers[data.id].data);
+        } else if (data.id !== state.myPlayerId) {
+            // Queue the update for when the player is added (handles race condition)
+            console.log('Queueing stats update for player', data.id, '(not yet in otherPlayers)');
+            pendingStatsUpdates[data.id] = { money: data.money, deliveries: data.deliveries };
         } else {
-            console.log('Player', data.id, 'not found in otherPlayers (might be self)');
+            console.log('Player', data.id, 'is self, ignoring');
         }
         updateOnlinePlayersUI();
     });
