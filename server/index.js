@@ -691,7 +691,9 @@ io.on('connection', (socket) => {
             money: player.money,
             deliveries: player.deliveries
         };
+        const otherSocketIds = Object.keys(activePlayers).filter(id => id !== socket.id);
         console.log('Broadcasting player-stats-updated:', statsUpdate);
+        console.log('Active players who should receive:', otherSocketIds);
         socket.broadcast.emit('player-stats-updated', statsUpdate);
 
         console.log(`${player.username} delivered to ${player.currentDelivery.customer.name} (+R$${reward})`);

@@ -172,6 +172,17 @@ export function updateOnlinePlayersUI() {
     const listEl = document.getElementById('online-players-list');
     if (!countEl || !listEl) return;
 
+    // Debug: log raw state data before building allPlayers
+    const otherPlayersData = Object.entries(state.otherPlayers).map(([id, p]) => ({
+        id,
+        username: p.data?.username,
+        money: p.data?.money,
+        rawData: p.data
+    }));
+    if (otherPlayersData.length > 0) {
+        console.log('updateOnlinePlayersUI - otherPlayers state:', otherPlayersData);
+    }
+
     const allPlayers = [
         { id: state.myPlayerId, username: getPlayerUsername(), money: state.score, isMe: true },
         ...Object.values(state.otherPlayers).map(p => ({
