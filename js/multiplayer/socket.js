@@ -289,20 +289,13 @@ function initSocketConnection() {
         updateOtherPlayerPosition(data.id, data);
     });
 
-    // Player stats updated
+    // Player stats updated (other player completed delivery)
     state.socket.on('player-stats-updated', (data) => {
-        console.log('player-stats-updated received:', data);
-        console.log('otherPlayers keys:', Object.keys(state.otherPlayers));
-
         if (state.otherPlayers[data.id]) {
-            console.log('Updating player', data.id, 'money:', state.otherPlayers[data.id].data.money, '->', data.money);
             state.otherPlayers[data.id].data.money = data.money;
             state.otherPlayers[data.id].data.deliveries = data.deliveries;
-            console.log('After update - player data:', state.otherPlayers[data.id].data);
-        } else {
-            console.log('Player', data.id, 'not found in otherPlayers (might be self)');
+            updateOnlinePlayersUI();
         }
-        updateOnlinePlayersUI();
     });
 
     // Player updated (hasFood, etc)

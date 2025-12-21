@@ -2,9 +2,10 @@
 // Pickup and delivery collision checks
 
 import { state } from '../state.js';
-import { pickupFood, deliverFood } from './orders.js';
 
 export function checkCollisions() {
+    if (!state.socket) return;
+
     const playerPos = state.motorcycle.position;
     const pickupRadius = 4;
 
@@ -14,7 +15,7 @@ export function checkCollisions() {
         if (restaurant) {
             const dist = playerPos.distanceTo(restaurant.position);
             if (dist < pickupRadius) {
-                pickupFood();
+                state.socket.emit('collect-pickup');
             }
         }
     }
@@ -25,7 +26,7 @@ export function checkCollisions() {
         if (customer) {
             const dist = playerPos.distanceTo(customer.position);
             if (dist < pickupRadius) {
-                deliverFood();
+                state.socket.emit('complete-delivery');
             }
         }
     }
