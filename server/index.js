@@ -686,11 +686,13 @@ io.on('connection', (socket) => {
         });
 
         // Broadcast stats update
-        io.emit('player-stats-updated', {
+        const statsUpdate = {
             id: socket.id,
             money: player.money,
             deliveries: player.deliveries
-        });
+        };
+        console.log('Broadcasting player-stats-updated:', statsUpdate);
+        io.emit('player-stats-updated', statsUpdate);
 
         console.log(`${player.username} delivered to ${player.currentDelivery.customer.name} (+R$${reward})`);
 
