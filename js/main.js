@@ -40,7 +40,6 @@ import {
 } from './ui/preferences.js';
 
 // Gameplay
-import { generateNewOrder } from './gameplay/orders.js';
 import { checkCollisions } from './gameplay/collision.js';
 
 // Multiplayer
@@ -79,12 +78,8 @@ function startGame() {
     state.motorcycle.position.set(0, 0, 0);
     state.motorcycle.rotation.set(0, 0, 0);
 
-    // Generate first order if not already set by server
-    if (!state.isMultiplayer || !state.currentOrder) {
-        generateNewOrder();
-    } else {
-        updateOrdersPanel();
-    }
+    // Update order panel with server-assigned order
+    updateOrdersPanel();
 
     state.gameRunning = true;
 
