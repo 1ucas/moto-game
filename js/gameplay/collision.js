@@ -14,7 +14,12 @@ export function checkCollisions() {
         if (restaurant) {
             const dist = playerPos.distanceTo(restaurant.position);
             if (dist < pickupRadius) {
-                pickupFood();
+                // In multiplayer, emit to server for validation
+                if (state.isMultiplayer && state.socket) {
+                    state.socket.emit('collect-pickup');
+                } else {
+                    pickupFood();
+                }
             }
         }
     }
@@ -25,7 +30,12 @@ export function checkCollisions() {
         if (customer) {
             const dist = playerPos.distanceTo(customer.position);
             if (dist < pickupRadius) {
-                deliverFood();
+                // In multiplayer, emit to server for validation
+                if (state.isMultiplayer && state.socket) {
+                    state.socket.emit('complete-delivery');
+                } else {
+                    deliverFood();
+                }
             }
         }
     }
