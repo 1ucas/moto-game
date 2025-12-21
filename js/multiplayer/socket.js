@@ -9,19 +9,6 @@ import { addOtherPlayer, removeOtherPlayer, updateOtherPlayerPosition } from '..
 import { generateNewOrder } from '../gameplay/orders.js';
 import { updateLeaderboard } from '../ui/leaderboard.js';
 
-// Queue for pending stats updates (handles race condition when player-stats-updated arrives before init)
-const pendingStatsUpdates = {};
-
-// Apply any pending stats updates for a player (called after player is added)
-function applyPendingStatsUpdates(playerId) {
-    if (pendingStatsUpdates[playerId] && state.otherPlayers[playerId]) {
-        const pending = pendingStatsUpdates[playerId];
-        state.otherPlayers[playerId].data.money = pending.money;
-        state.otherPlayers[playerId].data.deliveries = pending.deliveries;
-        delete pendingStatsUpdates[playerId];
-    }
-}
-
 // ============= USERNAME MANAGEMENT =============
 export function getPlayerUsername() {
     return localStorage.getItem(MP_USERNAME_KEY) || 'Entregador';
@@ -261,10 +248,9 @@ function initSocketConnection() {
     state.socket.on('init', (data) => {
         state.myPlayerId = data.playerId;
 
-        // Add existing players and apply any pending stats updates
+        // Add existing players
         data.otherPlayers.forEach(playerData => {
             addOtherPlayer(playerData);
-            applyPendingStatsUpdates(playerData.id);
         });
 
         // Set current delivery from server
@@ -289,15 +275,12 @@ function initSocketConnection() {
     // New player joined
     state.socket.on('player-joined', (playerData) => {
         addOtherPlayer(playerData);
-        applyPendingStatsUpdates(playerData.id);
         updateOnlinePlayersUI();
     });
 
     // Player left
     state.socket.on('player-left', (playerId) => {
         removeOtherPlayer(playerId);
-        // Clean up any pending stats for this player
-        delete pendingStatsUpdates[playerId];
         updateOnlinePlayersUI();
     });
 
@@ -311,11 +294,8 @@ function initSocketConnection() {
         if (state.otherPlayers[data.id]) {
             state.otherPlayers[data.id].data.money = data.money;
             state.otherPlayers[data.id].data.deliveries = data.deliveries;
-        } else if (data.id !== state.myPlayerId) {
-            // Queue the update for when the player is added (handles race condition)
-            pendingStatsUpdates[data.id] = { money: data.money, deliveries: data.deliveries };
+            updateOnlinePlayersUI();
         }
-        updateOnlinePlayersUI();
     });
 
     // Player updated (hasFood, etc)
