@@ -836,6 +836,86 @@
                 0 0 20px var(--rush-red-glow);
         }
 
+        /* Joystick directional arrows */
+        .joystick-arrow {
+            position: absolute;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.35);
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease, color 0.3s ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .joystick-arrow-up {
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .joystick-arrow-down {
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .joystick-arrow-left {
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .joystick-arrow-right {
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* First-touch hint animation */
+        .joystick-base.first-touch .joystick-arrow {
+            color: rgba(255, 255, 255, 0.9);
+            animation: arrowPulse 0.6s ease-out;
+        }
+
+        .joystick-base.first-touch .joystick-arrow-up {
+            animation: arrowPulseUp 0.6s ease-out;
+        }
+
+        .joystick-base.first-touch .joystick-arrow-down {
+            animation: arrowPulseDown 0.6s ease-out;
+        }
+
+        .joystick-base.first-touch .joystick-arrow-left {
+            animation: arrowPulseLeft 0.6s ease-out;
+        }
+
+        .joystick-base.first-touch .joystick-arrow-right {
+            animation: arrowPulseRight 0.6s ease-out;
+        }
+
+        @keyframes arrowPulseUp {
+            0% { transform: translateX(-50%) translateY(0); opacity: 1; }
+            50% { transform: translateX(-50%) translateY(-6px); opacity: 1; }
+            100% { transform: translateX(-50%) translateY(0); opacity: 0.35; }
+        }
+
+        @keyframes arrowPulseDown {
+            0% { transform: translateX(-50%) translateY(0); opacity: 1; }
+            50% { transform: translateX(-50%) translateY(6px); opacity: 1; }
+            100% { transform: translateX(-50%) translateY(0); opacity: 0.35; }
+        }
+
+        @keyframes arrowPulseLeft {
+            0% { transform: translateY(-50%) translateX(0); opacity: 1; }
+            50% { transform: translateY(-50%) translateX(-6px); opacity: 1; }
+            100% { transform: translateY(-50%) translateX(0); opacity: 0.35; }
+        }
+
+        @keyframes arrowPulseRight {
+            0% { transform: translateY(-50%) translateX(0); opacity: 1; }
+            50% { transform: translateY(-50%) translateX(6px); opacity: 1; }
+            100% { transform: translateY(-50%) translateX(0); opacity: 0.35; }
+        }
+
         /* Mobile-specific media query */
         @media (max-width: 768px), (pointer: coarse) {
             .mobile-controls {
@@ -2230,6 +2310,10 @@
                 <!-- Virtual Joystick (Left Side) -->
                 <div class="joystick-container" id="joystick-container">
                     <div class="joystick-base" id="joystick-base">
+                        <div class="joystick-arrow joystick-arrow-up">▲</div>
+                        <div class="joystick-arrow joystick-arrow-down">▼</div>
+                        <div class="joystick-arrow joystick-arrow-left">◀</div>
+                        <div class="joystick-arrow joystick-arrow-right">▶</div>
                         <div class="joystick-stick" id="joystick-stick"></div>
                     </div>
                 </div>

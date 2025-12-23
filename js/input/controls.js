@@ -66,6 +66,7 @@ function setupVirtualJoystick() {
 
     const maxDistance = 40; // Maximum joystick movement radius
     const deadzone = 0.15; // Deadzone threshold (15%)
+    let hasBeenTouched = false; // Track first touch for hint animation
 
     function getJoystickCenter() {
         const rect = joystickBase.getBoundingClientRect();
@@ -130,6 +131,15 @@ function setupVirtualJoystick() {
     joystickBase.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if (state.joystickActive) return;
+
+        // First-touch hint animation
+        if (!hasBeenTouched) {
+            hasBeenTouched = true;
+            joystickBase.classList.add('first-touch');
+            setTimeout(() => {
+                joystickBase.classList.remove('first-touch');
+            }, 600);
+        }
 
         const touch = e.changedTouches[0];
         state.joystickTouchId = touch.identifier;
