@@ -170,15 +170,26 @@
 - **Files to modify:** `index.html`, `game.js`, `server/index.js`
 - **Benefits:** Enhances team interaction, adds fun social element perfect for team building, encourages player engagement
 
+#### 12. Sync round timer (server-driven 5 minutes)
+- **Description:** Ensure the round timer is authoritative from the server at 5 minutes, and the server validates that a round truly ended when the client says it did.
+- **Implementation:**
+  - Set server `CONFIG.GAME_TIME` to 300s and expose it in the `init` payload (already present) and any reconnection payloads.
+  - Client: consume `gameConfig.gameTime` from the `init` event and drive the HUD timer with it; remove hardcoded client `CONFIG.GAME_TIME` or only use it as a fallback.
+  - Server: track round start timestamps per player; when receiving `end-round`, verify that at least `GAME_TIME` seconds have passed (with a small tolerance) before persisting session/leaderboard.
+  - Optionally, have the server emit a `round-ended` to the client when time elapses to make termination symmetric.
+- **Estimated Complexity:** Medium
+- **Files to modify:** `js/config.js`, `js/main.js`, `server/index.js`
+- **Risk mitigations:** Add a tolerance window (e.g., 1-2s) for clock drift; log and ignore premature `end-round` calls.
+
 ---
 
 ## Backlog Summary
 
-- **Total Tasks:** 11 (3 completed)
+- **Total Tasks:** 12 (3 completed)
 - **Low Effort:** 4 tasks (~~1~~✅, ~~2~~✅, 3-4)
-- **Medium Effort:** 3 tasks (5-6, 11 - emotes system)
+- **Medium Effort:** 4 tasks (5-6, 11 - emotes system, 12 - timer sync)
 - **High Effort:** 2 tasks (7-8)
 - **External Dependencies:** 1 task (9)
-- **New Proposals:** 2 tasks (~~10 - tutorial~~✅, 11 - emotes)
+- **New Proposals:** 3 tasks (~~10 - tutorial~~✅, 11 - emotes, 12 - timer sync)
 
 **Priority Recommendation:** Start with remaining low-effort tasks (3-4) for quick wins, then tackle medium tasks (5-6, 11) before attempting high-complexity features (7-8). Handle domain migration (9) when infrastructure is ready.
