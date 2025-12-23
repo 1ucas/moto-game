@@ -1,243 +1,116 @@
 # Food Rush - Delivery Racing Game
 
-A multiplayer 3D delivery racing game built with Three.js where you play as a motorcycle courier making deliveries across a vibrant city. Race against the clock to earn as much money as possible in 3 minutes while seeing other players on the map!
+A stylized 3D delivery racer built with Three.js. You ride a moto through a compact city, pick up orders at restaurants, deliver to customers, and race the clock while seeing other couriers in real time via Socket.io.
 
-## Play the Game
+## How to Play
 
-**Server Required:** This game requires a multiplayer server to run. See the [Backend Setup](#backend-multiplayer-server) section below.
+**Server required.** The game talks to the multiplayer server for orders, scoring, and presence. Start the server, then open http://localhost:3000 (the server serves the client files).
 
-Once the server is running, open the game in a modern web browser.
+1) **Start** – pick a name (stored locally) and hit the play button.
+2) **Pickup** – ride to the orange restaurant marker to collect the order.
+3) **Deliver** – follow the blue customer marker to drop it off.
+4) **Earn** – rewards are R$15–24 per delivery.
+5) **Repeat** – finish as many deliveries as possible before the round timer ends.
 
 ### Controls
 
 | Input | Action |
 |-------|--------|
-| `W` / `↑` | Accelerate |
-| `S` / `↓` | Brake / Reverse |
-| `A` / `←` | Turn left |
-| `D` / `→` | Turn right |
-| Touch | Virtual joystick (mobile) |
+| W / ↑ | Accelerate |
+| S / ↓ | Brake / reverse |
+| A / ← | Turn left |
+| D / → | Turn right |
+| Touch | Virtual joystick (toggle left/right position) |
 
-### Gameplay
+## Client Features
 
-1. **Pickup** - Go to the restaurant (orange marker) to collect the order
-2. **Deliver** - Take it to the customer (blue marker)
-3. **Earn** - Get R$15-24 per delivery
-4. **Repeat** - Complete as many deliveries as possible before time runs out!
+- **Game loop & timer** – default 5-minute round on the client (set in [js/config.js](js/config.js)); countdown ends the run and submits to the leaderboard.
+- **Orders panel** – shows current pickup/delivery, emoji, and live distance; auto-updates when the server assigns a new delivery.
+- **Heading-up minimap** – rotates with your bike; shows restaurant/customer markers and other players in multiplayer.
+- **HUD** – money, speed, timer with urgent state, distance tracking, and pop-up toasts for pickups/deliveries/records.
+- **World** – procedural block grid with streets, sidewalks, flowers, billboards, buildings, and AI traffic cars.
+- **Audio** – Web Audio engine hum tied to speed, 8-bit background music, and pickup/delivery/record stingers; in-game toggles for engine and music.
+- **Onboarding** – tutorial modal for first-time players, name modal, joystick side preference, and sound menu.
+- **Multiplayer UI** – online panel showing all players’ money, realtime ghost bikes, and a 24h leaderboard modal.
 
----
+## Configuration
 
-## Project Structure
+- Client tuning in [js/config.js](js/config.js):
+  - `GAME_TIME` = 300s client timer; `CITY_SIZE` = 400; `BUILDING_COUNT` = 40; `CAR_COUNT` = 8;
+  - Physics: `MAX_SPEED` 25, `ACCELERATION` 0.08, `BRAKE_POWER` 0.15, `TURN_SPEED` 0.035, `FRICTION` 0.03.
+  - Storage keys for joystick side, engine sound, music, username, and tutorial completion.
+- Server gameplay constants in [server/index.js](server/index.js) (defaults to 3-minute rounds server-side, pickup radius 4, reward base 15 with bonus up to 10). Align client `GAME_TIME` with server `CONFIG.GAME_TIME` if you want exact parity.
+
+## Project Layout
 
 ```
 moto-game/
-├── index.html          # Game HTML, styles, and UI
-├── game.js             # Game logic (Three.js, physics, controls)
-├── README.md           # This file
-└── server/             # Multiplayer server (Node.js)
-    ├── package.json
-    ├── index.js        # Socket.io server
-    ├── init-db.js      # Database setup script
-    └── .gitignore
+├── index.html          # UI layout, styles, Three.js bootstrap
+├── js/
+│   ├── main.js         # Entry point and game loop orchestration
+│   ├── config.js       # Tunables and constants
+│   ├── state.js        # Shared mutable game state
+│   ├── world/          # Scene, sky, ground, buildings, traffic
+│   ├── entities/       # Motorcycle, markers, other players
+│   ├── gameplay/       # Collision checks
+│   ├── input/          # Keyboard + virtual joystick
+│   ├── ui/             # HUD, minimap, leaderboard, preferences, tutorial
+│   ├── multiplayer/    # Socket.io client session/auth and events
+│   └── audio/          # Engine hum, music, effects
+└── server/
+    ├── index.js        # Express + Socket.io server, sessions, leaderboard
+    ├── init-db.js      # SQLite schema bootstrap
+    └── package.json
 ```
 
----
+## Gameplay Flow (Multiplayer)
 
-## Frontend (Game Client)
+- Frontend connects to the server origin, creates/recovers a session cookie, and emits `join` with the chosen username.
+- Server assigns the current delivery (restaurant + customer); the client shows markers and distances.
+- Collisions (pickup/delivery radius 4) emit `collect-pickup` / `complete-delivery`; the server validates distance, awards money, and sends `new-delivery` for the next job.
+- Every round end (`end-round`) persists the session, recalculates the 24h leaderboard, and resets player state for the next round.
 
-### Technologies
+### WebSocket Events
 
-- **Three.js** (r128) - 3D rendering
-- **Vanilla JavaScript** - No framework dependencies
-- **CSS3** - Animations, responsive design
+- Client → server: `join`, `move`, `collect-pickup`, `complete-delivery`, `start-round`, `end-round`, `get-leaderboard`.
+- Server → client: `init`, `player-joined`, `player-left`, `player-moved`, `pickup-success`, `delivery-success`, `player-updated`, `player-stats-updated`, `new-delivery`, `round-started`, `round-ended`, `leaderboard`.
 
-### Key Features
+### REST API
 
-- 3D city environment with buildings, traffic, and decorations
-- Physics-based motorcycle movement
-- Touch controls with virtual joystick for mobile
-- Local leaderboard (localStorage)
-- Sound effects (Web Audio API)
-- Responsive design (desktop & mobile)
+- `GET /health` – status + online count.
+- `GET /api/players/count` – online players.
+- `GET /api/leaderboard` – top 10 from last 24h.
+- `POST /api/session` – create/recover a user session and set cookie.
+- `POST /api/session/username` – update the current user’s name.
 
-### Configuration
+## Database Schema (SQLite)
 
-Game settings are in `game.js` at the `CONFIG` object:
+- `users` – `id`, `uuid`, `username`, totals (`total_earnings`, `total_deliveries`, `best_session_score`).
+- `sessions` – per-play stats (`earnings`, `deliveries_completed`, `deliveries_failed`, `play_time`, timestamps, `user_id`).
+- `auth_sessions` – session tokens (`token`, `user_id`, `expires_at`) for cookie auth.
 
-```javascript
-const CONFIG = {
-    GAME_TIME: 180,           // Round duration (seconds)
-    CITY_SIZE: 400,           // City dimensions
-    DELIVERY_BASE_REWARD: 15, // Minimum reward per delivery
-    MAX_SPEED: 25,            // Motorcycle top speed
-    ACCELERATION: 0.08,       // Acceleration rate
-    TURN_SPEED: 0.035,        // Turning sensitivity
-};
-```
-
-### Game Locations
-
-**Restaurants (Pickup Points):**
-| Name | Position (x, z) |
-|------|-----------------|
-| Pizza Place | (-120, -120) |
-| Burger King | (120, -120) |
-| Sushi House | (-120, 120) |
-| Taco Bell | (120, 120) |
-| Noodle Bar | (0, -160) |
-| Chicken Spot | (0, 160) |
-
-**Customers (Delivery Points):**
-| Name | Position (x, z) |
-|------|-----------------|
-| Casa do João | (-160, 0) |
-| Apt. Maria | (160, 0) |
-| Escritório Tech | (-40, -160) |
-| Festa da Ana | (40, 160) |
-| Casa do Pedro | (160, -120) |
-| Dormitório UFC | (-160, 120) |
-
----
-
-## Backend (Multiplayer Server)
-
-The multiplayer server is required to play the game. It enables players to see each other on the map while completing their own deliveries.
-
-### Technologies
-
-- **Node.js** - Runtime
-- **Express** - HTTP server
-- **Socket.io** - Real-time WebSocket communication
-- **SQLite** - Player persistence
-
-### Setup
+## Running Locally
 
 ```bash
 cd server
 npm install
-npm run init-db   # Create database tables
-npm start         # Start server on port 3000
+npm run init-db   # creates game.db with all tables
+npm start         # serves the client and Socket.io on http://localhost:3000
 ```
 
-### Environment Variables
+Open http://localhost:3000 in the browser. The same-origin server is required so cookies work and collisions are validated.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | 3000 | Server port |
-| `DB_PATH` | ./game.db | SQLite database path |
+## Deployment Notes
 
-### API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Server status and player count |
-| `/api/players/count` | GET | Current online players |
-| `/api/leaderboard` | GET | Top 10 scores |
-
-### WebSocket Events
-
-**Client → Server:**
-
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `join` | `{uuid, username}` | Join game session |
-| `move` | `{x, z, rotation}` | Position update |
-| `collect-pickup` | - | Collect food at restaurant |
-| `complete-delivery` | - | Deliver to customer |
-| `end-round` | - | Round finished |
-
-**Server → Client:**
-
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `init` | `{playerId, uuid, player, otherPlayers}` | Initial state |
-| `player-joined` | `{id, username, position}` | New player |
-| `player-left` | `socketId` | Player disconnected |
-| `player-moved` | `{id, x, z, rotation}` | Position broadcast |
-| `delivery-success` | `{reward, newTotal}` | Delivery completed |
-
-### Database Schema
-
-```sql
--- Players
-users (id, uuid, username, total_earnings, total_deliveries, best_session_score)
-
--- Play sessions
-sessions (id, user_id, started_at, ended_at, earnings, deliveries_completed, play_time)
-```
-
----
-
-## Deployment
-
-### Deploy Server to DigitalOcean/VPS
+- Environment variables: `PORT` (default 3000), `DB_PATH`, `COOKIE_SECRET`, `ALLOWED_ORIGINS`, `WEBHOOK_SECRET`, `REPO_PATH`, `PM2_APP_NAME`.
+- The server serves the static client from the repo root; a reverse proxy (e.g., Nginx) must forward WebSockets to `/socket.io/`.
+- PM2 example:
 
 ```bash
-# Copy files to server
-scp -r server/ root@your-server:/var/www/foodrush-server
-
-# SSH and setup
-ssh root@your-server
-cd /var/www/foodrush-server
-npm install
-npm run init-db
-
-# Run with PM2
-npm install -g pm2
 pm2 start index.js --name foodrush
 pm2 save && pm2 startup
 ```
 
-### Configure Nginx (Reverse Proxy)
-
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-
-    # WebSocket support
-    location /socket.io/ {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_read_timeout 86400;
-    }
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_set_header Host $host;
-    }
-}
-```
-
-```bash
-# Enable site and add SSL
-ln -s /etc/nginx/sites-available/foodrush /etc/nginx/sites-enabled/
-certbot --nginx -d your-domain.com
-systemctl reload nginx
-```
-
-The game will automatically connect to the server when opened.
-
----
-
-## Monitoring
-
-```bash
-# View server logs
-pm2 logs foodrush
-
-# Monitor resources
-pm2 monit
-
-# Check health
-curl https://your-domain.com/health
-```
-
----
-
 ## License
 
-MIT
+No License
