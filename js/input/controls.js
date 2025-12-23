@@ -139,6 +139,12 @@ function setupVirtualJoystick() {
             setTimeout(() => {
                 joystickBase.classList.remove('first-touch');
             }, 600);
+
+            // Hide the touch hint icon
+            const touchHint = document.getElementById('joystick-touch-hint');
+            if (touchHint) {
+                touchHint.classList.add('hidden');
+            }
         }
 
         const touch = e.changedTouches[0];
