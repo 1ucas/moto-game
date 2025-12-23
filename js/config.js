@@ -19,10 +19,10 @@ export const GRID_SPACING = 80; // Larger blocks
 export const STREET_WIDTH = 20; // Wide streets
 export const BLOCK_SIZE = GRID_SPACING - STREET_WIDTH; // Size of each city block
 
-// LocalStorage keys
-export const JOYSTICK_POSITION_KEY = 'ifoodRushJoystickPosition';
-export const ENGINE_SOUND_KEY = 'ifoodRushEngineSound';
-export const MUSIC_KEY = 'ifoodRushMusic';
+// LocalStorage keys (brand-neutral)
+export const JOYSTICK_POSITION_KEY = 'foodRushJoystickPosition';
+export const ENGINE_SOUND_KEY = 'foodRushEngineSound';
+export const MUSIC_KEY = 'foodRushMusic';
 export const MP_USERNAME_KEY = 'foodrush_mp_username';
 export const MP_NAME_SET_KEY = 'foodrush_name_set';
 
