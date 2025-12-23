@@ -50,6 +50,15 @@ export function applyJoystickPosition(position) {
         joystickContainer.classList.remove('position-left', 'position-right');
         joystickContainer.classList.add(`position-${position}`);
     }
+
+    // Position minimap on opposite side of joystick to prevent finger overlap
+    const minimap = document.querySelector('.minimap');
+    if (minimap) {
+        minimap.classList.remove('position-left', 'position-right');
+        // Joystick left → minimap right, joystick right → minimap left
+        const minimapPosition = position === 'left' ? 'right' : 'left';
+        minimap.classList.add(`position-${minimapPosition}`);
+    }
 }
 
 export function initJoystickPosition() {
