@@ -25,6 +25,7 @@ export const ENGINE_SOUND_KEY = 'foodRushEngineSound';
 export const MUSIC_KEY = 'foodRushMusic';
 export const MP_USERNAME_KEY = 'foodrush_mp_username';
 export const MP_NAME_SET_KEY = 'foodrush_name_set';
+export const TUTORIAL_COMPLETED_KEY = 'foodrush_tutorial_completed';
 
 // Landmark positions - buildings should avoid these
 export const LANDMARK_POSITIONS = [

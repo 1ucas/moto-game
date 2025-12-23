@@ -136,22 +136,21 @@
 
 ## New Proposed Tasks
 
-#### 10. Add tutorial/onboarding system for new players
-- **Description:** Interactive first-time player experience explaining game mechanics
-- **Implementation:**
-  - Create overlay tutorial system with step-by-step instructions
-  - Guide players through:
-    - Movement controls (WASD/Arrow keys)
-    - Reading the minimap
-    - Understanding pickup (orange) vs delivery (blue) markers
-    - Reading the HUD (score, timer, distance)
-    - Mobile joystick usage (if applicable)
-  - Add "Skip Tutorial" option for returning players
-  - Store tutorial completion in localStorage
-  - Add practice delivery without time pressure
-- **Estimated Complexity:** Medium-High
-- **Files to modify:** `index.html`, `game.js`
-- **Benefits:** Improves new player retention and reduces learning curve
+#### ~~10. Add tutorial/onboarding system for new players~~ ✅
+- ~~**Description:** Interactive first-time player experience explaining game mechanics~~
+- ~~**Implementation:**~~
+  - ~~Create tutorial system with step-by-step instructions~~
+  - ~~Don't use an overlay for the tutorial, but use like an "almost full screen" modal with a screenshot or smaller version of the view, explaining the UI elements~~
+  - ~~Guide players through:~~
+    - ~~Movement controls (WASD/Arrow keys)~~
+    - ~~Reading the minimap~~
+    - ~~Understanding pickup (orange) vs delivery (blue) markers~~
+    - ~~Reading the HUD (score, timer, distance)~~
+    - ~~Mobile joystick usage (if applicable)~~
+  - ~~Add "Skip Tutorial" option for returning players~~
+  - ~~Store tutorial completion in localStorage~~
+- ~~**Estimated Complexity:** Medium-High~~
+- ~~**Benefits:** Improves new player retention and reduces learning curve~~
 
 #### 11. Add player emotes and horn system
 - **Description:** Quick reactions and horn sounds for social interaction during gameplay
@@ -175,11 +174,11 @@
 
 ## Backlog Summary
 
-- **Total Tasks:** 11 (2 completed)
+- **Total Tasks:** 11 (3 completed)
 - **Low Effort:** 4 tasks (~~1~~✅, ~~2~~✅, 3-4)
 - **Medium Effort:** 3 tasks (5-6, 11 - emotes system)
 - **High Effort:** 2 tasks (7-8)
 - **External Dependencies:** 1 task (9)
-- **New Proposals:** 2 tasks (10 - tutorial, 11 - emotes)
+- **New Proposals:** 2 tasks (~~10 - tutorial~~✅, 11 - emotes)
 
-**Priority Recommendation:** Start with remaining low-effort tasks (3-4) for quick wins, then tackle medium tasks (5-6, 11) before attempting high-complexity features (7-8, 10). Handle domain migration (9) when infrastructure is ready.
+**Priority Recommendation:** Start with remaining low-effort tasks (3-4) for quick wins, then tackle medium tasks (5-6, 11) before attempting high-complexity features (7-8). Handle domain migration (9) when infrastructure is ready.

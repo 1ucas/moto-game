@@ -52,6 +52,9 @@ import {
     saveNameAndClose
 } from './multiplayer/socket.js';
 
+// Tutorial
+import { checkAndShowTutorial, openTutorial } from './ui/tutorial.js';
+
 // ============= GAME FLOW =============
 function startGame() {
     document.getElementById('start-screen').style.display = 'none';
@@ -269,6 +272,9 @@ function init() {
     // Check if first time user needs to set name
     checkFirstTimeUser();
 
+    // Check and show tutorial for new players (after name modal if shown)
+    checkAndShowTutorial();
+
     // Start render loop
     animate();
 }
@@ -289,6 +295,7 @@ window.toggleEngineSound = toggleEngineSound;
 window.toggleMusic = toggleMusic;
 window.openSoundMenu = openSoundMenu;
 window.closeSoundMenu = closeSoundMenu;
+window.openTutorial = openTutorial;
 
 // ============= START =============
 // Set multiplayer server URL
