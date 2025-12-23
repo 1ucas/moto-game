@@ -84,11 +84,11 @@ function createMarker(color, emoji, isRestaurant) {
     ctx.fillText(emoji, 32, 32);
 
     const texture = new THREE.CanvasTexture(canvas);
-    const emojiMesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(2, 2),
-        new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide })
+    const emojiSprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: texture, transparent: true })
     );
-    iconGroup.add(emojiMesh);
+    emojiSprite.scale.set(2, 2, 1);
+    iconGroup.add(emojiSprite);
 
     iconGroup.position.y = 4;
     group.add(iconGroup);
@@ -105,8 +105,6 @@ export function updateMarkers(delta) {
     [...state.restaurants, ...state.customers].forEach(marker => {
         if (marker.userData.iconGroup) {
             marker.userData.iconGroup.position.y = 4 + Math.sin(time * 2) * 0.3;
-            // Horizontal rotation to improve visibility from all angles
-            marker.userData.iconGroup.rotation.y = time;
         }
     });
 }
