@@ -38,10 +38,43 @@ export function createOtherPlayerMesh(playerData) {
     rearWheel.position.z = -0.8;
     group.add(rearWheel);
 
-    // Delivery bag (green)
+    // Delivery bag (green with accents)
+    const bagGroup = new THREE.Group();
+    const yellowMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+    const whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const darkGreenMat = new THREE.MeshBasicMaterial({ color: 0x388E3C });
+
+    // Main bag
     const bag = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 0.5), bodyMat);
-    bag.position.set(0, 1.85, -0.7);
-    group.add(bag);
+    bag.position.y = 0.35;
+    bagGroup.add(bag);
+
+    // Lid with yellow stripe
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.08, 0.52), bodyMat);
+    lid.position.y = 0.75;
+    bagGroup.add(lid);
+
+    const lidStripe = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.03, 0.54), yellowMat);
+    lidStripe.position.y = 0.80;
+    bagGroup.add(lidStripe);
+
+    // Simple logo (white background with fork/knife)
+    const logoBg = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 0.25), whiteMat);
+    logoBg.position.set(0, 0.38, 0.251);
+    bagGroup.add(logoBg);
+
+    // Simple fork & knife icon
+    const forkKnife = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.15), darkGreenMat);
+    forkKnife.position.set(0, 0.38, 0.252);
+    bagGroup.add(forkKnife);
+
+    // Yellow bottom stripe
+    const bottomStripe = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.05, 0.48), yellowMat);
+    bottomStripe.position.y = 0.03;
+    bagGroup.add(bottomStripe);
+
+    bagGroup.position.set(0, 1.5, -0.7);
+    group.add(bagGroup);
 
     // Username label (canvas texture)
     const canvas = document.createElement('canvas');

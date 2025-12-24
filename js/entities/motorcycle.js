@@ -118,7 +118,10 @@ export function createMotorcycle() {
 
     // === DELIVERY BAG ===
     const bagGroup = new THREE.Group();
+    const bagYellowMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+    const bagDarkMat = new THREE.MeshBasicMaterial({ color: 0xC41422 });
 
+    // Main bag body
     const bag = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 0.5), redMat);
     bag.position.y = 0.35;
     bagGroup.add(bag);
@@ -128,10 +131,75 @@ export function createMotorcycle() {
     lid.position.y = 0.75;
     bagGroup.add(lid);
 
-    // Logo (white rectangle)
-    const logo = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.15), whiteMat);
-    logo.position.set(0, 0.4, 0.26);
-    bagGroup.add(logo);
+    // Yellow accent stripe on top of lid
+    const lidStripe = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.03, 0.54), bagYellowMat);
+    lidStripe.position.y = 0.80;
+    bagGroup.add(lidStripe);
+
+    // Yellow corner accents (thermal bag style)
+    const cornerMat = bagYellowMat;
+    const cornerSize = 0.08;
+    const corners = [
+        { x: -0.28, y: 0.05, z: 0.23 },
+        { x: 0.28, y: 0.05, z: 0.23 },
+        { x: -0.28, y: 0.65, z: 0.23 },
+        { x: 0.28, y: 0.65, z: 0.23 }
+    ];
+    corners.forEach(pos => {
+        const corner = new THREE.Mesh(new THREE.BoxGeometry(cornerSize, cornerSize, 0.02), cornerMat);
+        corner.position.set(pos.x, pos.y, pos.z + 0.02);
+        bagGroup.add(corner);
+    });
+
+    // Logo background (white rounded area)
+    const logoBg = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.32), whiteMat);
+    logoBg.position.set(0, 0.38, 0.251);
+    bagGroup.add(logoBg);
+
+    // Food icon - Fork (left)
+    const forkHandle = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.18), bagDarkMat);
+    forkHandle.position.set(-0.08, 0.35, 0.252);
+    bagGroup.add(forkHandle);
+
+    // Fork prongs
+    for (let i = -1; i <= 1; i++) {
+        const prong = new THREE.Mesh(new THREE.PlaneGeometry(0.015, 0.06), bagDarkMat);
+        prong.position.set(-0.08 + i * 0.02, 0.47, 0.252);
+        bagGroup.add(prong);
+    }
+
+    // Food icon - Knife (right)
+    const knifeHandle = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.12), bagDarkMat);
+    knifeHandle.position.set(0.08, 0.32, 0.252);
+    bagGroup.add(knifeHandle);
+
+    const knifeBlade = new THREE.Mesh(new THREE.PlaneGeometry(0.04, 0.12), bagDarkMat);
+    knifeBlade.position.set(0.08, 0.44, 0.252);
+    bagGroup.add(knifeBlade);
+
+    // "HOT" text indicator - three horizontal bars as steam lines
+    const steamMat = bagYellowMat;
+    for (let i = 0; i < 3; i++) {
+        const steam = new THREE.Mesh(new THREE.PlaneGeometry(0.06 - i * 0.015, 0.02), steamMat);
+        steam.position.set(0, 0.55 + i * 0.04, 0.252);
+        steam.rotation.z = (i % 2 === 0) ? 0.2 : -0.2;
+        bagGroup.add(steam);
+    }
+
+    // Side straps (thermal bag style)
+    const strapMat = blackMat;
+    const leftStrap = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.5, 0.02), strapMat);
+    leftStrap.position.set(-0.32, 0.35, 0);
+    bagGroup.add(leftStrap);
+
+    const rightStrap = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.5, 0.02), strapMat);
+    rightStrap.position.set(0.32, 0.35, 0);
+    bagGroup.add(rightStrap);
+
+    // Yellow reflective strip at bottom
+    const bottomStripe = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.05, 0.48), bagYellowMat);
+    bottomStripe.position.y = 0.03;
+    bagGroup.add(bottomStripe);
 
     bagGroup.position.set(0, 1.5, -0.7);
     state.motorcycleGroup.add(bagGroup);
