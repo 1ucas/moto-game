@@ -406,16 +406,16 @@ export function createSimpleBillboards() {
 
         // Billboard text
         const canvas = document.createElement('canvas');
-        canvas.width = 256;
-        canvas.height = 128;
+        canvas.width = 512;
+        canvas.height = 256;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#222';
-        ctx.fillRect(0, 0, 256, 128);
-        ctx.font = 'bold 60px Arial';
+        ctx.fillRect(0, 0, 512, 256);
+        ctx.font = 'bold 72px Arial';
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(data.text, 128, 64);
+        ctx.fillText(data.text, 256, 128);
 
         const texture = new THREE.CanvasTexture(canvas);
         const billboard = new THREE.Mesh(

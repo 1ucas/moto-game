@@ -150,7 +150,7 @@ export function updateMotorcycle(delta) {
     if (state.keys.forward) {
         state.speed = Math.min(state.speed + acceleration, maxSpeed);
     } else if (state.keys.backward) {
-        state.speed = Math.max(state.speed - CONFIG.BRAKE_POWER, -maxSpeed / 3);
+        state.speed = Math.max(state.speed - CONFIG.BRAKE_POWER, -15);
     } else {
         // Friction
         state.speed *= (1 - CONFIG.FRICTION);
