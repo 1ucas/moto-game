@@ -190,7 +190,7 @@ function createMedians(flowerColors) {
 
             // Add a small tree or flowers
             if (Math.random() > 0.5) {
-                // Tree
+                // Christmas Tree
                 const trunk = new THREE.Mesh(
                     new THREE.CylinderGeometry(0.3, 0.4, 2, 6),
                     new THREE.MeshBasicMaterial({ color: 0x5d4037 })
@@ -200,10 +200,60 @@ function createMedians(flowerColors) {
 
                 const leaves = new THREE.Mesh(
                     new THREE.SphereGeometry(1.5, 8, 8),
-                    new THREE.MeshBasicMaterial({ color: 0x2e7d32 })
+                    new THREE.MeshBasicMaterial({ color: 0x1b5e20 })
                 );
                 leaves.position.set(cx, 2.5, cz);
                 state.scene.add(leaves);
+
+                // Christmas star on top
+                const starMat = new THREE.MeshBasicMaterial({ color: 0xffd700 });
+                const star = new THREE.Mesh(
+                    new THREE.OctahedronGeometry(0.3, 0),
+                    starMat
+                );
+                star.position.set(cx, 4.2, cz);
+                star.rotation.y = Math.PI / 4;
+                state.scene.add(star);
+
+                // Christmas ornaments
+                const ornamentColors = [0xff0000, 0xffd700, 0x0000ff, 0xff69b4, 0xc0c0c0];
+                for (let o = 0; o < 6; o++) {
+                    const ornament = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.15, 6, 6),
+                        new THREE.MeshBasicMaterial({
+                            color: ornamentColors[o % ornamentColors.length]
+                        })
+                    );
+                    const angle = (o / 6) * Math.PI * 2;
+                    const radius = 1.0 + Math.random() * 0.3;
+                    const height = 2.0 + Math.random() * 1.2;
+                    ornament.position.set(
+                        cx + Math.cos(angle) * radius,
+                        height,
+                        cz + Math.sin(angle) * radius
+                    );
+                    state.scene.add(ornament);
+                }
+
+                // Christmas lights (small glowing spheres)
+                const lightColors = [0xff0000, 0x00ff00, 0xffff00, 0x00ffff, 0xff00ff];
+                for (let l = 0; l < 8; l++) {
+                    const light = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.08, 4, 4),
+                        new THREE.MeshBasicMaterial({
+                            color: lightColors[l % lightColors.length]
+                        })
+                    );
+                    const angle = (l / 8) * Math.PI * 2;
+                    const radius = 1.2 + (l % 2) * 0.3;
+                    const height = 2.5 + (l % 3) * 0.5;
+                    light.position.set(
+                        cx + Math.cos(angle) * radius,
+                        height,
+                        cz + Math.sin(angle) * radius
+                    );
+                    state.scene.add(light);
+                }
             } else {
                 // Flowers
                 for (let f = 0; f < 5; f++) {
@@ -332,7 +382,7 @@ export function createStreetLights() {
 
 export function createSimpleBillboards() {
     const billboardData = [
-        { text: "Dirija com cuidado", color: 0xea1d2c, x: -120, z: -50 },
+        { text: "Natal é Jesus", color: 0xcc0000, x: -120, z: -50 },
         { text: "FOME?", color: 0xffcc00, x: 120, z: 50 },
         { text: "PEDALE!", color: 0x00aa00, x: 0, z: -120 },
     ];

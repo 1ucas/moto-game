@@ -64,6 +64,28 @@ export function createMotorcycle() {
     head.position.set(0, 2, -0.2);
     state.motorcycleGroup.add(head);
 
+    // Santa hat
+    const santaRedMat = new THREE.MeshBasicMaterial({ color: 0xcc0000 });
+    const santaWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+    // Hat cone
+    const hatCone = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.35, 8), santaRedMat);
+    hatCone.position.set(0, 2.3, -0.2);
+    hatCone.rotation.z = 0.3; // Slight tilt
+    hatCone.rotation.x = -0.1;
+    state.motorcycleGroup.add(hatCone);
+
+    // Hat brim (white fluffy part)
+    const hatBrim = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.06, 6, 12), santaWhiteMat);
+    hatBrim.position.set(0, 2.15, -0.2);
+    hatBrim.rotation.x = Math.PI / 2;
+    state.motorcycleGroup.add(hatBrim);
+
+    // Pom-pom at tip
+    const pomPom = new THREE.Mesh(new THREE.SphereGeometry(0.07, 6, 6), santaWhiteMat);
+    pomPom.position.set(0.1, 2.45, -0.2);
+    state.motorcycleGroup.add(pomPom);
+
     // Visor
     const visor = new THREE.Mesh(
         new THREE.PlaneGeometry(0.25, 0.12),
