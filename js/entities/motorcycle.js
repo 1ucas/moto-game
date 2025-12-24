@@ -144,7 +144,7 @@ export function createMotorcycle() {
 
 export function updateMotorcycle(delta) {
     const acceleration = CONFIG.ACCELERATION;
-    const maxSpeed = CONFIG.MAX_SPEED;
+    const maxSpeed = CONFIG.MAX_SPEED + state.speedBoost;
 
     // Acceleration
     if (state.keys.forward) {

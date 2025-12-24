@@ -536,6 +536,29 @@
             font-weight: 600;
         }
 
+        .boost-indicator {
+            display: none;
+            margin-top: 8px;
+            padding: 5px 12px;
+            background: linear-gradient(180deg, #ff6600 0%, #ff4400 100%);
+            color: white;
+            font-family: 'Bangers', cursive;
+            font-size: 1rem;
+            border-radius: 15px;
+            animation: boostPulse 0.3s ease-in-out infinite alternate;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 15px rgba(255, 102, 0, 0.6);
+        }
+
+        .boost-indicator.active {
+            display: block;
+        }
+
+        @keyframes boostPulse {
+            0% { transform: scale(1); box-shadow: 0 0 15px rgba(255, 102, 0, 0.6); }
+            100% { transform: scale(1.05); box-shadow: 0 0 25px rgba(255, 102, 0, 0.9); }
+        }
+
         /* Mini-map - Square design for clearer directions */
         .minimap {
             position: absolute;
@@ -2313,6 +2336,7 @@
             <div class="speed-panel">
                 <div class="speed-value" id="speed">0</div>
                 <div class="speed-unit">km/h</div>
+                <div class="boost-indicator" id="boost-indicator">🔥 BOOST!</div>
             </div>
 
             <div class="minimap position-right">

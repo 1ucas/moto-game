@@ -12,6 +12,7 @@ import { startBackgroundMusic, stopBackgroundMusic } from './audio/music.js';
 import { initScene, createLights, createSky, updateClouds, updateCamera, onWindowResize } from './world/scene.js';
 import { createGround, createStreets, createBuildings, createStreetLights, createSimpleBillboards } from './world/city.js';
 import { createTrafficCars, updateTrafficCars } from './world/traffic.js';
+import { createBoosters, updateBoosters, checkBoosterCollision } from './world/boosters.js';
 
 // Entities
 import { createMotorcycle, updateMotorcycle } from './entities/motorcycle.js';
@@ -187,6 +188,8 @@ function animate() {
         updateCamera();
         updateTrafficCars(delta);
         updateMarkers(delta);
+        updateBoosters(delta);
+        checkBoosterCollision();
         updateClouds(delta);
         checkCollisions();
         updateHUD(endGame);
@@ -231,6 +234,9 @@ function init() {
 
     // Traffic
     createTrafficCars();
+
+    // Speed boosters
+    createBoosters();
 
     // Player
     createMotorcycle();

@@ -23,6 +23,11 @@ export const state = {
     restaurants: [],
     customers: [],
     clouds: [],
+    boosters: [],
+
+    // Speed boost state
+    speedBoost: 0,
+    boostEndTime: 0,
 
     // Game state
     currentOrder: null,
@@ -85,4 +90,6 @@ export function resetGameState() {
     state.rotation = 0;
     state.hasFood = false;
     state.velocity = { x: 0, z: 0 };
+    state.speedBoost = 0;
+    state.boostEndTime = 0;
 }

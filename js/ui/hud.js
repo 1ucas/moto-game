@@ -7,6 +7,14 @@ export function updateHUD(endGameCallback) {
     document.getElementById('score').textContent = state.score.toLocaleString('pt-BR');
     document.getElementById('speed').textContent = Math.abs(Math.floor(state.speed));
 
+    // Update boost indicator
+    const boostIndicator = document.getElementById('boost-indicator');
+    if (state.speedBoost > 0) {
+        boostIndicator.classList.add('active');
+    } else {
+        boostIndicator.classList.remove('active');
+    }
+
     // Update timer
     state.gameTime -= 1 / 60;
     if (state.gameTime <= 0) {
