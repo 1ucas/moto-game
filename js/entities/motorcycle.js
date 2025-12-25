@@ -218,7 +218,7 @@ export function updateMotorcycle(delta) {
     if (state.keys.forward) {
         state.speed = Math.min(state.speed + acceleration, maxSpeed);
     } else if (state.keys.backward) {
-        state.speed = Math.max(state.speed - CONFIG.BRAKE_POWER, -15);
+        state.speed = Math.max(state.speed - CONFIG.BRAKE_POWER, -18);
     } else {
         // Friction
         state.speed *= (1 - CONFIG.FRICTION);
@@ -227,7 +227,7 @@ export function updateMotorcycle(delta) {
 
     // Turning (only when moving)
     if (Math.abs(state.speed) > 1) {
-        const turnFactor = Math.min(Math.abs(state.speed) / 30, 1);
+        const turnFactor = Math.min(Math.abs(state.speed) / 36, 1);
 
         // Use smoother turning when joystick is active
         if (state.joystickActive && state.joystickInput.x !== 0) {
@@ -287,9 +287,25 @@ export function updateMotorcycle(delta) {
     // Rotation
     state.motorcycle.rotation.y = state.rotation;
 
-    // Tilt when turning
-    const targetTilt = (state.keys.left ? 0.2 : 0) - (state.keys.right ? 0.2 : 0);
-    state.motorcycle.rotation.z = THREE.MathUtils.lerp(state.motorcycle.rotation.z, targetTilt * (state.speed / maxSpeed), 0.1);
+    // Lean when turning - more pronounced and includes joystick input
+    const maxLean = 0.35; // ~20 degrees max lean angle
+    let targetLean = 0;
+
+    // Calculate lean from keyboard or joystick input
+    if (state.joystickActive && state.joystickInput.x !== 0) {
+        // Joystick: lean proportional to joystick position
+        targetLean = -state.joystickInput.x * maxLean;
+    } else {
+        // Keyboard: full lean when key pressed
+        targetLean = (state.keys.left ? maxLean : 0) - (state.keys.right ? maxLean : 0);
+    }
+
+    // Scale lean by speed (more lean at higher speeds, less when slow)
+    const speedFactor = Math.min(Math.abs(state.speed) / maxSpeed, 1);
+    targetLean *= speedFactor;
+
+    // Smooth interpolation for natural lean-in and lean-out
+    state.motorcycle.rotation.z = THREE.MathUtils.lerp(state.motorcycle.rotation.z, targetLean, 0.15);
 
     // Bag bounce animation
     if (state.motorcycle.userData.bag) {
