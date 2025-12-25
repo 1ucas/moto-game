@@ -252,12 +252,14 @@ function init() {
     setupControls();
     window.addEventListener('resize', onWindowResize);
 
-    // Custom cursor
-    document.addEventListener('mousemove', (e) => {
-        const cursor = document.getElementById('cursor');
-        cursor.style.left = e.clientX + 'px';
-        cursor.style.top = e.clientY + 'px';
-    });
+    // Custom cursor (only on desktop - skip on mobile to save resources)
+    if (!isMobileDevice()) {
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.getElementById('cursor');
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+    }
 
     // Initialize preferences
     initJoystickPosition();

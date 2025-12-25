@@ -66,58 +66,43 @@ function createBooster(x, z, direction) {
     innerGlow.position.y = 0.12;
     group.add(innerGlow);
 
-    // Fire flames (cone shapes)
-    const flameMat = new THREE.MeshBasicMaterial({
-        color: 0xff6600,
-        transparent: true,
-        opacity: 0.85
-    });
-
-    // Central flame
-    const centralFlame = new THREE.Mesh(
-        new THREE.ConeGeometry(0.6, 2, 8),
-        flameMat
-    );
-    centralFlame.position.y = 1;
-    group.add(centralFlame);
-
-    // Surrounding flames
-    for (let i = 0; i < 4; i++) {
-        const angle = (i / 4) * Math.PI * 2;
-        const flame = new THREE.Mesh(
-            new THREE.ConeGeometry(0.4, 1.4, 6),
-            new THREE.MeshBasicMaterial({
-                color: 0xffaa00,
-                transparent: true,
-                opacity: 0.8
-            })
-        );
-        flame.position.set(
-            Math.cos(angle) * 0.8,
-            0.7,
-            Math.sin(angle) * 0.8
-        );
-        group.add(flame);
-    }
-
-    // Arrow indicator pointing in road direction
-    const arrowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const arrow = new THREE.Mesh(
-        new THREE.ConeGeometry(0.5, 1, 4),
-        arrowMat
-    );
-    arrow.position.y = 2.5;
-    if (direction === 'horizontal') {
-        arrow.rotation.z = -Math.PI / 2;
-    }
-    group.add(arrow);
+    // Fire emoji sprite floating above the booster
+    const emojiSprite = createFireEmojiSprite();
+    emojiSprite.position.y = 3;
+    emojiSprite.scale.set(3, 3, 1);
+    group.add(emojiSprite);
 
     // Store references for animation
     group.userData.base = base;
     group.userData.innerGlow = innerGlow;
-    group.userData.centralFlame = centralFlame;
+    group.userData.emojiSprite = emojiSprite;
 
     return group;
+}
+
+// Create a fire emoji sprite using canvas
+function createFireEmojiSprite() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+
+    // Draw fire emoji
+    ctx.font = '100px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🔥', 64, 64);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+
+    const spriteMaterial = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        depthWrite: false
+    });
+
+    return new THREE.Sprite(spriteMaterial);
 }
 
 export function updateBoosters(delta) {
@@ -133,12 +118,12 @@ export function updateBoosters(delta) {
             return;
         }
 
-        // Animate flames
-        const centralFlame = booster.userData.centralFlame;
-        if (centralFlame) {
-            centralFlame.scale.y = 1 + Math.sin(time * 10) * 0.2;
-            centralFlame.scale.x = 1 + Math.sin(time * 8 + 1) * 0.1;
-            centralFlame.scale.z = 1 + Math.sin(time * 8 + 2) * 0.1;
+        // Animate the fire emoji sprite - bob up and down and pulse scale
+        const emojiSprite = booster.userData.emojiSprite;
+        if (emojiSprite) {
+            emojiSprite.position.y = 3 + Math.sin(time * 4) * 0.5;
+            const scale = 3 + Math.sin(time * 6) * 0.3;
+            emojiSprite.scale.set(scale, scale, 1);
         }
 
         // Pulse the base glow
@@ -147,12 +132,11 @@ export function updateBoosters(delta) {
             base.material.opacity = 0.6 + Math.sin(time * 5) * 0.2;
         }
 
-        // Rotate flames slightly
-        booster.children.forEach((child, i) => {
-            if (i > 2 && i < 7) { // Surrounding flames
-                child.position.y = 0.7 + Math.sin(time * 12 + i) * 0.15;
-            }
-        });
+        // Pulse inner glow
+        const innerGlow = booster.userData.innerGlow;
+        if (innerGlow) {
+            innerGlow.material.opacity = 0.7 + Math.sin(time * 7) * 0.2;
+        }
     });
 
     // Check for boost expiration
