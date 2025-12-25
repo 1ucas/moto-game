@@ -1079,6 +1079,13 @@
             }
         }
 
+        /* Hide custom cursor on mobile/touch devices */
+        @media (pointer: coarse), (max-width: 768px) {
+            .custom-cursor {
+                display: none !important;
+            }
+        }
+
         /* Leaderboard Screen */
         #leaderboard-screen {
             position: absolute;
