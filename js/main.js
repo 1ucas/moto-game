@@ -13,6 +13,7 @@ import { initScene, createLights, createSky, updateClouds, updateCamera, onWindo
 import { createGround, createStreets, createBuildings, createStreetLights, createSimpleBillboards } from './world/city.js';
 import { createTrafficCars, updateTrafficCars } from './world/traffic.js';
 import { createBoosters, updateBoosters, checkBoosterCollision } from './world/boosters.js';
+import { initParticleSystem, updateParticleTrail, clearParticles } from './world/particles.js';
 
 // Entities
 import { createMotorcycle, updateMotorcycle } from './entities/motorcycle.js';
@@ -116,6 +117,7 @@ function endGame() {
     state.gameRunning = false;
     stopEngineSound();
     stopBackgroundMusic();
+    clearParticles();
     document.body.classList.remove('game-active');
 
     // Notify server if multiplayer
@@ -190,6 +192,7 @@ function animate() {
         updateMarkers(delta);
         updateBoosters(delta);
         checkBoosterCollision();
+        updateParticleTrail(delta);
         updateClouds(delta);
         checkCollisions();
         updateHUD(endGame);
@@ -237,6 +240,9 @@ function init() {
 
     // Speed boosters
     createBoosters();
+
+    // Particle effects
+    initParticleSystem();
 
     // Player
     createMotorcycle();
