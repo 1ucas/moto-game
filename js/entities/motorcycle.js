@@ -231,8 +231,8 @@ export function updateMotorcycle(delta) {
 
         // Use smoother turning when joystick is active
         if (state.joystickActive && state.joystickInput.x !== 0) {
-            // Apply gradual turning based on joystick position (reduced by 60% for smoother control)
-            state.rotation -= CONFIG.TURN_SPEED * turnFactor * state.joystickInput.x * 0.6;
+            // Apply gradual turning based on joystick position (full power to match keyboard)
+            state.rotation -= CONFIG.TURN_SPEED * turnFactor * state.joystickInput.x;
         } else {
             // Keyboard input uses full turning
             if (state.keys.left) {
@@ -313,6 +313,21 @@ export function updateMotorcycle(delta) {
         state.motorcycle.userData.bag.rotation.x = bounceAmount;
     }
 
+    // Update brake button reverse mode indicator
+    updateBrakeReverseMode();
+
     // Update engine sound
     updateEngineSound();
+}
+
+function updateBrakeReverseMode() {
+    const brakeBtn = document.getElementById('brake-btn');
+    if (!brakeBtn) return;
+
+    // Show reverse mode when speed is at or below 0
+    if (state.speed <= 0.1) {
+        brakeBtn.classList.add('reverse-mode');
+    } else {
+        brakeBtn.classList.remove('reverse-mode');
+    }
 }

@@ -54,8 +54,11 @@ export function setupControls() {
         }
     });
 
-    // Mobile virtual joystick
+    // Mobile virtual joystick (horizontal steering only)
     setupVirtualJoystick();
+
+    // Mobile throttle/brake buttons
+    setupPedalButtons();
 }
 
 function setupVirtualJoystick() {
@@ -64,8 +67,8 @@ function setupVirtualJoystick() {
 
     if (!joystickBase || !joystickStick) return;
 
-    const maxDistance = 40; // Maximum joystick movement radius
-    const deadzone = 0.15; // Deadzone threshold (15%)
+    const maxDistance = 50; // Maximum joystick movement radius (wider for horizontal)
+    const deadzone = 0.08; // Reduced deadzone threshold (8%) for better responsiveness
     let hasBeenTouched = false; // Track first touch for hint animation
 
     function getJoystickCenter() {
@@ -79,46 +82,38 @@ function setupVirtualJoystick() {
     function handleJoystickMove(clientX, clientY) {
         const center = getJoystickCenter();
 
-        // Calculate offset from center
+        // Calculate offset from center (horizontal only)
         let deltaX = clientX - center.x;
-        let deltaY = clientY - center.y;
 
-        // Calculate distance from center
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-        // Clamp to max distance
-        if (distance > maxDistance) {
-            deltaX = (deltaX / distance) * maxDistance;
-            deltaY = (deltaY / distance) * maxDistance;
+        // Clamp to max distance (horizontal only)
+        if (Math.abs(deltaX) > maxDistance) {
+            deltaX = Math.sign(deltaX) * maxDistance;
         }
 
-        // Update stick position
-        joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+        // Update stick position (horizontal movement only)
+        joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), -50%)`;
 
-        // Normalize values (-1 to 1)
+        // Normalize value (-1 to 1)
         const normalizedX = deltaX / maxDistance;
-        const normalizedY = deltaY / maxDistance;
 
-        // Apply deadzone
+        // Apply deadzone (reduced to 8% for better responsiveness)
         const absX = Math.abs(normalizedX);
-        const absY = Math.abs(normalizedY);
 
-        // Store smoothed joystick input for gradual turning
+        // Store smoothed joystick input for gradual turning (steering only)
         state.joystickInput.x = absX > deadzone ? normalizedX : 0;
-        state.joystickInput.y = absY > deadzone ? normalizedY : 0;
+        // Y-axis no longer controlled by joystick - handled by pedal buttons
+        state.joystickInput.y = 0;
 
-        // Update control keys based on joystick position
+        // Update steering keys based on joystick position
         state.keys.left = normalizedX < -deadzone;
         state.keys.right = normalizedX > deadzone;
-        state.keys.forward = normalizedY < -deadzone;
-        state.keys.backward = normalizedY > deadzone;
+        // Forward/backward no longer controlled by joystick
     }
 
     function resetJoystick() {
         joystickStick.style.transform = 'translate(-50%, -50%)';
         joystickStick.classList.remove('active');
-        state.keys.forward = false;
-        state.keys.backward = false;
+        // Only reset steering keys - forward/backward are controlled by pedal buttons
         state.keys.left = false;
         state.keys.right = false;
         state.joystickInput.x = 0;
@@ -189,4 +184,81 @@ function setupVirtualJoystick() {
 
     // Prevent context menu on long press
     joystickBase.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+function setupPedalButtons() {
+    const throttleBtn = document.getElementById('throttle-btn');
+    const brakeBtn = document.getElementById('brake-btn');
+
+    if (!throttleBtn || !brakeBtn) return;
+
+    // Track touch IDs to support multi-touch (gas + brake simultaneously if needed)
+    let throttleTouchId = null;
+    let brakeTouchId = null;
+
+    // Throttle button handlers
+    throttleBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (throttleTouchId !== null) return;
+        throttleTouchId = e.changedTouches[0].identifier;
+        state.keys.forward = true;
+        throttleBtn.classList.add('active');
+    }, { passive: false });
+
+    throttleBtn.addEventListener('touchend', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === throttleTouchId) {
+                throttleTouchId = null;
+                state.keys.forward = false;
+                throttleBtn.classList.remove('active');
+                break;
+            }
+        }
+    });
+
+    throttleBtn.addEventListener('touchcancel', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === throttleTouchId) {
+                throttleTouchId = null;
+                state.keys.forward = false;
+                throttleBtn.classList.remove('active');
+                break;
+            }
+        }
+    });
+
+    // Brake button handlers
+    brakeBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (brakeTouchId !== null) return;
+        brakeTouchId = e.changedTouches[0].identifier;
+        state.keys.backward = true;
+        brakeBtn.classList.add('active');
+    }, { passive: false });
+
+    brakeBtn.addEventListener('touchend', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === brakeTouchId) {
+                brakeTouchId = null;
+                state.keys.backward = false;
+                brakeBtn.classList.remove('active');
+                break;
+            }
+        }
+    });
+
+    brakeBtn.addEventListener('touchcancel', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === brakeTouchId) {
+                brakeTouchId = null;
+                state.keys.backward = false;
+                brakeBtn.classList.remove('active');
+                break;
+            }
+        }
+    });
+
+    // Prevent context menu on long press
+    throttleBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+    brakeBtn.addEventListener('contextmenu', (e) => e.preventDefault());
 }

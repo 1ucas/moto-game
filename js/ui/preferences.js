@@ -51,6 +51,14 @@ export function applyJoystickPosition(position) {
         joystickContainer.classList.add(`position-${position}`);
     }
 
+    // Position pedals on opposite side of joystick
+    const pedalsContainer = document.getElementById('pedals-container');
+    if (pedalsContainer) {
+        pedalsContainer.classList.remove('position-left', 'position-right');
+        const pedalsPosition = position === 'left' ? 'right' : 'left';
+        pedalsContainer.classList.add(`position-${pedalsPosition}`);
+    }
+
     // Position minimap on opposite side of joystick to prevent finger overlap
     const minimap = document.querySelector('.minimap');
     if (minimap) {
