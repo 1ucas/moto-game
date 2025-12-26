@@ -999,10 +999,28 @@
             left: auto;
         }
 
+        /* Diagonal layout for right position: GAS upper-right, BRAKE lower-left */
+        .pedals-container.position-right .throttle-btn {
+            transform: translateX(25px);
+        }
+
+        .pedals-container.position-right .brake-btn {
+            transform: translateX(-25px);
+        }
+
         .pedals-container.position-left {
             left: 30px;
             left: calc(30px + env(safe-area-inset-left, 0px));
             right: auto;
+        }
+
+        /* Diagonal layout for left position: GAS upper-left, BRAKE lower-right */
+        .pedals-container.position-left .throttle-btn {
+            transform: translateX(-25px);
+        }
+
+        .pedals-container.position-left .brake-btn {
+            transform: translateX(25px);
         }
 
         .pedal-btn {
@@ -1045,12 +1063,21 @@
 
         .throttle-btn:active,
         .throttle-btn.active {
-            transform: scale(0.95);
             background: linear-gradient(180deg, #66BB6A 0%, #388E3C 100%);
             box-shadow:
                 0 2px 8px rgba(0, 0, 0, 0.3),
                 inset 0 2px 0 rgba(255, 255, 255, 0.3),
                 0 0 20px rgba(76, 175, 80, 0.5);
+        }
+
+        .pedals-container.position-right .throttle-btn:active,
+        .pedals-container.position-right .throttle-btn.active {
+            transform: translateX(25px) scale(0.95);
+        }
+
+        .pedals-container.position-left .throttle-btn:active,
+        .pedals-container.position-left .throttle-btn.active {
+            transform: translateX(-25px) scale(0.95);
         }
 
         .brake-btn {
@@ -1064,12 +1091,21 @@
 
         .brake-btn:active,
         .brake-btn.active {
-            transform: scale(0.95);
             background: linear-gradient(180deg, #ff6b6b 0%, #c0392b 100%);
             box-shadow:
                 0 2px 8px rgba(0, 0, 0, 0.3),
                 inset 0 2px 0 rgba(255, 255, 255, 0.3),
                 0 0 20px var(--rush-red-glow);
+        }
+
+        .pedals-container.position-right .brake-btn:active,
+        .pedals-container.position-right .brake-btn.active {
+            transform: translateX(-25px) scale(0.95);
+        }
+
+        .pedals-container.position-left .brake-btn:active,
+        .pedals-container.position-left .brake-btn.active {
+            transform: translateX(25px) scale(0.95);
         }
 
         /* Reverse mode indicator */
