@@ -2685,8 +2685,15 @@
                 const now = Date.now();
                 const target = event.target;
 
-                // Prevent double-tap zoom
-                if (now - lastTouchEnd <= 300 && target === lastTouchEndTarget) {
+                // Don't interfere with control elements
+                const isControl = target.closest('#joystick-base') ||
+                                 target.closest('#joystick-stick') ||
+                                 target.closest('#throttle-btn') ||
+                                 target.closest('#brake-btn') ||
+                                 target.closest('.mobile-controls');
+
+                // Prevent double-tap zoom, but not on controls
+                if (!isControl && now - lastTouchEnd <= 300 && target === lastTouchEndTarget) {
                     event.preventDefault();
                     event.stopPropagation();
                 }
@@ -2699,6 +2706,7 @@
             const preventGesture = function(event) {
                 const target = event.target;
                 const isControl = target.closest('#joystick-base') ||
+                                 target.closest('#joystick-stick') ||
                                  target.closest('#throttle-btn') ||
                                  target.closest('#brake-btn') ||
                                  target.closest('.mobile-controls');
@@ -2719,6 +2727,7 @@
                     // Allow multi-touch on control elements
                     const target = event.target;
                     const isControl = target.closest('#joystick-base') ||
+                                     target.closest('#joystick-stick') ||
                                      target.closest('#throttle-btn') ||
                                      target.closest('#brake-btn') ||
                                      target.closest('.mobile-controls');
@@ -2731,11 +2740,20 @@
                 }
             }, { passive: false, capture: true });
 
-            // Force viewport to stay at scale 1.0 during touch
+            // Force viewport to stay at scale 1.0 during touch (but allow controls)
             document.addEventListener('touchmove', function(event) {
                 if (event.scale && event.scale !== 1) {
-                    event.preventDefault();
-                    event.stopPropagation();
+                    const target = event.target;
+                    const isControl = target.closest('#joystick-base') ||
+                                     target.closest('#joystick-stick') ||
+                                     target.closest('#throttle-btn') ||
+                                     target.closest('#brake-btn') ||
+                                     target.closest('.mobile-controls');
+
+                    if (!isControl) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
                 }
             }, { passive: false, capture: true });
 
