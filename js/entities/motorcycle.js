@@ -231,8 +231,8 @@ export function updateMotorcycle(delta) {
 
         // Use smoother turning when joystick is active
         if (state.joystickActive && state.joystickInput.x !== 0) {
-            // Apply gradual turning based on joystick position (full power to match keyboard)
-            state.rotation -= CONFIG.TURN_SPEED * turnFactor * state.joystickInput.x;
+            // Apply gradual turning based on joystick position (reduced by 15% for mobile control)
+            state.rotation -= CONFIG.TURN_SPEED * turnFactor * state.joystickInput.x * 0.85;
         } else {
             // Keyboard input uses full turning
             if (state.keys.left) {

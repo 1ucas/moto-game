@@ -23,8 +23,6 @@
         }
 
         html {
-            /* Prevent zooming on double-tap */
-            touch-action: manipulation;
             /* Prevent iOS text size adjustment */
             -webkit-text-size-adjust: 100%;
             /* Additional zoom prevention for Safari */
@@ -57,7 +55,6 @@
             height: 100dvh; /* Dynamic viewport height for mobile */
             /* Prevent pull-to-refresh and overscroll */
             overscroll-behavior: none;
-            touch-action: manipulation;
             /* Force full viewport without browser UI on iOS */
             -webkit-overflow-scrolling: touch;
         }
@@ -87,6 +84,8 @@
             display: block;
             width: 100%;
             height: 100%;
+            /* Prevent pinch zoom on canvas while allowing multi-touch controls */
+            touch-action: none;
         }
 
         /* Custom Cursor - Motorcycle */
@@ -1000,18 +999,36 @@
             left: auto;
         }
 
+        /* Diagonal layout for pedals on right: GAS upper-left, BRAKE lower-right */
+        .pedals-container.position-right .throttle-btn {
+            transform: translateX(-45px);
+        }
+
+        .pedals-container.position-right .brake-btn {
+            transform: translateX(25px);
+        }
+
         .pedals-container.position-left {
             left: 30px;
             left: calc(30px + env(safe-area-inset-left, 0px));
             right: auto;
         }
 
+        /* Diagonal layout for pedals on left: GAS upper-right, BRAKE lower-left */
+        .pedals-container.position-left .throttle-btn {
+            transform: translateX(45px);
+        }
+
+        .pedals-container.position-left .brake-btn {
+            transform: translateX(-25px);
+        }
+
         .pedal-btn {
             position: relative;
-            width: 80px;
+            width: 70px;
             height: 70px;
             border: none;
-            border-radius: 15px;
+            border-radius: 50%;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -1046,12 +1063,21 @@
 
         .throttle-btn:active,
         .throttle-btn.active {
-            transform: scale(0.95);
             background: linear-gradient(180deg, #66BB6A 0%, #388E3C 100%);
             box-shadow:
                 0 2px 8px rgba(0, 0, 0, 0.3),
                 inset 0 2px 0 rgba(255, 255, 255, 0.3),
                 0 0 20px rgba(76, 175, 80, 0.5);
+        }
+
+        .pedals-container.position-right .throttle-btn:active,
+        .pedals-container.position-right .throttle-btn.active {
+            transform: translateX(-45px) scale(0.95);
+        }
+
+        .pedals-container.position-left .throttle-btn:active,
+        .pedals-container.position-left .throttle-btn.active {
+            transform: translateX(45px) scale(0.95);
         }
 
         .brake-btn {
@@ -1065,12 +1091,21 @@
 
         .brake-btn:active,
         .brake-btn.active {
-            transform: scale(0.95);
             background: linear-gradient(180deg, #ff6b6b 0%, #c0392b 100%);
             box-shadow:
                 0 2px 8px rgba(0, 0, 0, 0.3),
                 inset 0 2px 0 rgba(255, 255, 255, 0.3),
                 0 0 20px var(--rush-red-glow);
+        }
+
+        .pedals-container.position-right .brake-btn:active,
+        .pedals-container.position-right .brake-btn.active {
+            transform: translateX(25px) scale(0.95);
+        }
+
+        .pedals-container.position-left .brake-btn:active,
+        .pedals-container.position-left .brake-btn.active {
+            transform: translateX(-25px) scale(0.95);
         }
 
         /* Reverse mode indicator */
@@ -2650,8 +2685,15 @@
                 const now = Date.now();
                 const target = event.target;
 
-                // Prevent double-tap zoom
-                if (now - lastTouchEnd <= 300 && target === lastTouchEndTarget) {
+                // Don't interfere with control elements
+                const isControl = target.closest('#joystick-base') ||
+                                 target.closest('#joystick-stick') ||
+                                 target.closest('#throttle-btn') ||
+                                 target.closest('#brake-btn') ||
+                                 target.closest('.mobile-controls');
+
+                // Prevent double-tap zoom, but not on controls
+                if (!isControl && now - lastTouchEnd <= 300 && target === lastTouchEndTarget) {
                     event.preventDefault();
                     event.stopPropagation();
                 }
@@ -2660,29 +2702,58 @@
                 lastTouchEndTarget = target;
             }, { passive: false, capture: true });
 
-            // Prevent pinch zoom gesture (all gesture events)
+            // Prevent pinch zoom gesture (all gesture events) except on controls
             const preventGesture = function(event) {
-                event.preventDefault();
-                event.stopPropagation();
+                const target = event.target;
+                const isControl = target.closest('#joystick-base') ||
+                                 target.closest('#joystick-stick') ||
+                                 target.closest('#throttle-btn') ||
+                                 target.closest('#brake-btn') ||
+                                 target.closest('.mobile-controls');
+
+                if (!isControl) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
             };
 
             document.addEventListener('gesturestart', preventGesture, { passive: false, capture: true });
             document.addEventListener('gesturechange', preventGesture, { passive: false, capture: true });
             document.addEventListener('gestureend', preventGesture, { passive: false, capture: true });
 
-            // Prevent multi-touch zoom
+            // Prevent multi-touch zoom only on canvas (allow multi-touch on controls)
             document.addEventListener('touchstart', function(event) {
                 if (event.touches.length > 1) {
-                    event.preventDefault();
-                    event.stopPropagation();
+                    // Allow multi-touch on control elements
+                    const target = event.target;
+                    const isControl = target.closest('#joystick-base') ||
+                                     target.closest('#joystick-stick') ||
+                                     target.closest('#throttle-btn') ||
+                                     target.closest('#brake-btn') ||
+                                     target.closest('.mobile-controls');
+
+                    // Only prevent default on canvas/game area, not controls
+                    if (!isControl) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
                 }
             }, { passive: false, capture: true });
 
-            // Force viewport to stay at scale 1.0 during touch
+            // Force viewport to stay at scale 1.0 during touch (but allow controls)
             document.addEventListener('touchmove', function(event) {
                 if (event.scale && event.scale !== 1) {
-                    event.preventDefault();
-                    event.stopPropagation();
+                    const target = event.target;
+                    const isControl = target.closest('#joystick-base') ||
+                                     target.closest('#joystick-stick') ||
+                                     target.closest('#throttle-btn') ||
+                                     target.closest('#brake-btn') ||
+                                     target.closest('.mobile-controls');
+
+                    if (!isControl) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
                 }
             }, { passive: false, capture: true });
 
