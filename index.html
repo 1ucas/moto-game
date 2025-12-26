@@ -962,6 +962,116 @@
             100% { transform: translateY(-50%) translateX(0); opacity: 0.35; }
         }
 
+        /* Horizontal Joystick (steering only) */
+        .joystick-base.joystick-horizontal {
+            width: 160px;
+            height: 80px;
+            border-radius: 40px;
+        }
+
+        .joystick-horizontal .joystick-stick {
+            width: 55px;
+            height: 55px;
+        }
+
+        .joystick-horizontal .joystick-arrow-left {
+            left: 12px;
+        }
+
+        .joystick-horizontal .joystick-arrow-right {
+            right: 12px;
+        }
+
+        /* Pedals Container (Throttle/Brake Buttons) */
+        .pedals-container {
+            position: absolute;
+            bottom: 30px;
+            bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: auto;
+            transition: left 0.3s ease, right 0.3s ease;
+        }
+
+        .pedals-container.position-right {
+            right: 30px;
+            right: calc(30px + env(safe-area-inset-right, 0px));
+            left: auto;
+        }
+
+        .pedals-container.position-left {
+            left: 30px;
+            left: calc(30px + env(safe-area-inset-left, 0px));
+            right: auto;
+        }
+
+        .pedal-btn {
+            width: 80px;
+            height: 70px;
+            border: none;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            cursor: pointer;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+
+        .pedal-icon {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .pedal-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .throttle-btn {
+            background: linear-gradient(180deg, #4CAF50 0%, #2E7D32 100%);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            box-shadow:
+                0 4px 15px rgba(0, 0, 0, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .throttle-btn:active,
+        .throttle-btn.active {
+            transform: scale(0.95);
+            background: linear-gradient(180deg, #66BB6A 0%, #388E3C 100%);
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                0 0 20px rgba(76, 175, 80, 0.5);
+        }
+
+        .brake-btn {
+            background: linear-gradient(180deg, var(--rush-red) 0%, var(--rush-red-dark) 100%);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            box-shadow:
+                0 4px 15px rgba(0, 0, 0, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .brake-btn:active,
+        .brake-btn.active {
+            transform: scale(0.95);
+            background: linear-gradient(180deg, #ff6b6b 0%, #c0392b 100%);
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                0 0 20px var(--rush-red-glow);
+        }
+
         /* Mobile-specific media query */
         @media (max-width: 768px), (pointer: coarse) {
             .mobile-controls {
@@ -2361,17 +2471,27 @@
 
             <!-- Mobile Touch Controls -->
             <div class="mobile-controls" id="mobile-controls">
-                <!-- Virtual Joystick (Left Side) -->
+                <!-- Virtual Joystick (Left Side) - Horizontal Steering Only -->
                 <div class="joystick-container" id="joystick-container">
-                    <div class="joystick-base" id="joystick-base">
-                        <div class="joystick-arrow joystick-arrow-up">▲</div>
-                        <div class="joystick-arrow joystick-arrow-down">▼</div>
+                    <div class="joystick-base joystick-horizontal" id="joystick-base">
                         <div class="joystick-arrow joystick-arrow-left">◂</div>
                         <div class="joystick-arrow joystick-arrow-right">▸</div>
                         <div class="joystick-stick" id="joystick-stick">
                             <div class="joystick-touch-hint" id="joystick-touch-hint">👆</div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Throttle/Brake Buttons (Right Side) -->
+                <div class="pedals-container" id="pedals-container">
+                    <button class="pedal-btn throttle-btn" id="throttle-btn">
+                        <span class="pedal-icon">▲</span>
+                        <span class="pedal-label">GAS</span>
+                    </button>
+                    <button class="pedal-btn brake-btn" id="brake-btn">
+                        <span class="pedal-icon">▼</span>
+                        <span class="pedal-label">BRAKE</span>
+                    </button>
                 </div>
             </div>
         </div>
