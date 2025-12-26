@@ -313,6 +313,21 @@ export function updateMotorcycle(delta) {
         state.motorcycle.userData.bag.rotation.x = bounceAmount;
     }
 
+    // Update brake button reverse mode indicator
+    updateBrakeReverseMode();
+
     // Update engine sound
     updateEngineSound();
+}
+
+function updateBrakeReverseMode() {
+    const brakeBtn = document.getElementById('brake-btn');
+    if (!brakeBtn) return;
+
+    // Show reverse mode when speed is at or below 0
+    if (state.speed <= 0.1) {
+        brakeBtn.classList.add('reverse-mode');
+    } else {
+        brakeBtn.classList.remove('reverse-mode');
+    }
 }
