@@ -999,13 +999,13 @@
             left: auto;
         }
 
-        /* Diagonal layout for right position (joystick left): GAS upper-right, BRAKE lower-left */
+        /* Diagonal layout for pedals on right: GAS upper-left, BRAKE lower-right */
         .pedals-container.position-right .throttle-btn {
-            transform: translateX(25px);
+            transform: translateX(-25px);
         }
 
         .pedals-container.position-right .brake-btn {
-            transform: translateX(-25px);
+            transform: translateX(25px);
         }
 
         .pedals-container.position-left {
@@ -1014,13 +1014,13 @@
             right: auto;
         }
 
-        /* Diagonal layout for left position (joystick right): GAS upper-left, BRAKE lower-right */
+        /* Diagonal layout for pedals on left: GAS upper-right, BRAKE lower-left */
         .pedals-container.position-left .throttle-btn {
-            transform: translateX(-25px);
+            transform: translateX(25px);
         }
 
         .pedals-container.position-left .brake-btn {
-            transform: translateX(25px);
+            transform: translateX(-25px);
         }
 
         .pedal-btn {
@@ -1072,12 +1072,12 @@
 
         .pedals-container.position-right .throttle-btn:active,
         .pedals-container.position-right .throttle-btn.active {
-            transform: translateX(25px) scale(0.95);
+            transform: translateX(-25px) scale(0.95);
         }
 
         .pedals-container.position-left .throttle-btn:active,
         .pedals-container.position-left .throttle-btn.active {
-            transform: translateX(-25px) scale(0.95);
+            transform: translateX(25px) scale(0.95);
         }
 
         .brake-btn {
@@ -1100,12 +1100,12 @@
 
         .pedals-container.position-right .brake-btn:active,
         .pedals-container.position-right .brake-btn.active {
-            transform: translateX(-25px) scale(0.95);
+            transform: translateX(25px) scale(0.95);
         }
 
         .pedals-container.position-left .brake-btn:active,
         .pedals-container.position-left .brake-btn.active {
-            transform: translateX(25px) scale(0.95);
+            transform: translateX(-25px) scale(0.95);
         }
 
         /* Reverse mode indicator */
