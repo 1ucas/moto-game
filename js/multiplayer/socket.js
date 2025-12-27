@@ -4,7 +4,7 @@
 import { state } from '../state.js';
 import { MP_USERNAME_KEY, MP_NAME_SET_KEY } from '../config.js';
 import { playPickupSound, playDeliverySound, playRecordSound } from '../audio/effects.js';
-import { showMessage, updateOrdersPanel } from '../ui/hud.js';
+import { showMessage, showFlyingMoney, updateOrdersPanel } from '../ui/hud.js';
 import { addOtherPlayer, removeOtherPlayer, updateOtherPlayerPosition } from '../entities/players.js';
 import { updateLeaderboard } from '../ui/leaderboard.js';
 
@@ -337,6 +337,9 @@ function initSocketConnection() {
         ];
         const msg = messages[Math.floor(Math.random() * messages.length)];
         showMessage(msg.emoji, msg.text, `+R$ ${data.reward},00`);
+
+        // Flying money animation to score counter
+        showFlyingMoney(data.reward);
 
         state.hasFood = false;
         // Note: currentOrder will be set by the 'new-delivery' event from server
