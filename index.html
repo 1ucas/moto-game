@@ -63,8 +63,12 @@
             cursor: none;
         }
 
-        body.game-active .custom-cursor {
-            display: none;
+        /* Keep custom cursor visible on desktop during gameplay */
+        /* Only hide on mobile/touch devices */
+        @media (pointer: coarse), (max-width: 768px) {
+            body.game-active .custom-cursor {
+                display: none;
+            }
         }
 
         #game-container {
