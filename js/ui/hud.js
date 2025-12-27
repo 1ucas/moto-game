@@ -80,9 +80,18 @@ export function getDistanceToCustomer() {
 
 export function showMessage(emoji, text, subtext) {
     const popup = document.getElementById('message-popup');
+    const timerPanel = document.querySelector('.timer-panel');
+
     document.getElementById('message-emoji').textContent = emoji;
     document.getElementById('message-text').textContent = text;
     document.getElementById('message-subtext').textContent = subtext;
+
+    // Position toast centered below timer
+    if (timerPanel) {
+        const timerRect = timerPanel.getBoundingClientRect();
+        const timerCenterX = timerRect.left + timerRect.width / 2;
+        popup.style.left = `${timerCenterX}px`;
+    }
 
     // Reset classes and show popup
     popup.classList.remove('show', 'hide');
