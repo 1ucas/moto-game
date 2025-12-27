@@ -20,24 +20,32 @@ A stylized 3D delivery racer built with Three.js. You ride a moto through a comp
 | S / ↓ | Brake / reverse |
 | A / ← | Turn left |
 | D / → | Turn right |
-| Touch | Virtual joystick (toggle left/right position) |
+
+**Mobile controls** use a dual-control layout:
+- **Left side**: Horizontal steering joystick (slide left/right to turn)
+- **Right side**: Stacked throttle (top) and brake/reverse (bottom) buttons
+- Supports multi-touch for simultaneous steering and acceleration
 
 ## Client Features
 
 - **Game loop & timer** – default 5-minute round on the client (set in [js/config.js](js/config.js)); countdown ends the run and submits to the leaderboard.
 - **Orders panel** – shows current pickup/delivery, emoji, and live distance; auto-updates when the server assigns a new delivery.
 - **Heading-up minimap** – rotates with your bike; shows restaurant/customer markers and other players in multiplayer.
-- **HUD** – money, speed, timer with urgent state, distance tracking, and pop-up toasts for pickups/deliveries/records.
-- **World** – procedural block grid with streets, sidewalks, flowers, billboards, buildings, and AI traffic cars.
+- **HUD** – money, speed, timer with urgent state, distance tracking, boost indicator, and pop-up toasts for pickups/deliveries/records.
+- **World** – procedural block grid with streets, sidewalks, flowers, billboards, buildings, AI traffic cars, and seasonal Christmas decorations.
+- **Fire boosters** – 5 fire pickups scattered on roads; collecting one gives +15 km/h speed boost and raises max speed to 40+ km/h for 3 seconds; boosters respawn after 10 seconds.
+- **Motorcycle physics** – lean animation when turning (proportional to input and speed), boost particle trail when speed-boosted, and collision bounce.
+- **Delivery bag** – thermal-style food delivery bag on the rider's back with fork/knife icon, yellow accents, and bounce animation.
 - **Audio** – Web Audio engine hum tied to speed, 8-bit background music, and pickup/delivery/record stingers; in-game toggles for engine and music.
 - **Onboarding** – tutorial modal for first-time players, name modal, joystick side preference, and sound menu.
-- **Multiplayer UI** – online panel showing all players’ money, realtime ghost bikes, and a 24h leaderboard modal.
+- **Multiplayer UI** – online panel showing all players' money, realtime ghost bikes, and a 24h leaderboard modal.
 
 ## Configuration
 
 - Client tuning in [js/config.js](js/config.js):
   - `GAME_TIME` = 300s client timer; `CITY_SIZE` = 400; `BUILDING_COUNT` = 40; `CAR_COUNT` = 8;
-  - Physics: `MAX_SPEED` 25, `ACCELERATION` 0.08, `BRAKE_POWER` 0.15, `TURN_SPEED` 0.035, `FRICTION` 0.03.
+  - Physics: `MAX_SPEED` 30, `ACCELERATION` 0.08, `BRAKE_POWER` 0.15, `TURN_SPEED` 0.035, `FRICTION` 0.03.
+  - Boosters: +15 km/h immediate boost, 3s duration, 10s respawn.
   - Storage keys for joystick side, engine sound, music, username, and tutorial completion.
 - Server gameplay constants in [server/index.js](server/index.js) (defaults to 3-minute rounds server-side, pickup radius 4, reward base 15 with bonus up to 10). Align client `GAME_TIME` with server `CONFIG.GAME_TIME` if you want exact parity.
 
@@ -50,10 +58,15 @@ moto-game/
 │   ├── main.js         # Entry point and game loop orchestration
 │   ├── config.js       # Tunables and constants
 │   ├── state.js        # Shared mutable game state
-│   ├── world/          # Scene, sky, ground, buildings, traffic
-│   ├── entities/       # Motorcycle, markers, other players
+│   ├── world/          # Scene, sky, ground, buildings, traffic, boosters, particles
+│   │   ├── scene.js    # Three.js scene setup
+│   │   ├── city.js     # Procedural city blocks, streets, decorations
+│   │   ├── traffic.js  # AI traffic cars
+│   │   ├── boosters.js # Fire speed boost pickups
+│   │   └── particles.js # Boost particle trail system
+│   ├── entities/       # Motorcycle (with lean + bag), markers, other players
 │   ├── gameplay/       # Collision checks
-│   ├── input/          # Keyboard + virtual joystick
+│   ├── input/          # Keyboard + dual mobile controls (joystick + pedals)
 │   ├── ui/             # HUD, minimap, leaderboard, preferences, tutorial
 │   ├── multiplayer/    # Socket.io client session/auth and events
 │   └── audio/          # Engine hum, music, effects
