@@ -2,24 +2,25 @@
 
 ## Project Vision
 
-Food Rush is a multiplayer delivery racing game that serves multiple strategic purposes:
+Food Rush is a multiplayer delivery racing game that serves as:
 
 1. **Learning sandbox** for web app operations, payments, and monitoring
-2. **Portfolio piece** for MobileWest (mobile release engineering & monitoring company)
-3. **Distribution channel** for MobileWest brand awareness
-4. **Fun side project** with short feedback loops from friends
+2. **Fun side project** with short feedback loops from friends
+
+The skills acquired here — payment processing, error tracking, real-time infrastructure, and operational monitoring — will directly transfer to future products.
 
 ## Strategic Context
 
 ### Background
 
-The developer comes from a strong mobile background and is preparing to launch **MobileWest.com.br** — a mobile release engineering and monitoring company targeting Brazilian startups (similar to Runway + Sentry).
+The developer comes from a strong mobile background and is expanding into web application development. This game provides hands-on experience with:
 
-Food Rush provides hands-on experience with:
 - Web app deployment and operations
 - Payment processing (charges, refunds, subscriptions)
 - Error tracking and monitoring
 - Real-time multiplayer infrastructure
+
+These are foundational skills for building and operating any web-based product.
 
 ### Timeline
 
@@ -48,9 +49,8 @@ Potential pivot themes (preserve all gameplay):
 |------|--------|
 | Learn payment flows | Successfully process charges, refunds, and subscriptions |
 | Learn monitoring | Integrate Sentry, log aggregation, uptime monitoring |
-| Build portfolio | Game listed on MobileWest as showcase project |
 | Maintain engagement | Friends actively playing and providing feedback |
-| Brand awareness | MobileWest branding visible in game |
+| Ship consistently | Complete roadmap within 2-month timeline |
 
 ---
 
@@ -92,9 +92,8 @@ Potential pivot themes (preserve all gameplay):
 |------|----------|-------|
 | Get written iFood approval | Critical | Blocker for public growth |
 | Fix timer sync bug | High | Client uses 5min, server uses 3min |
-| Integrate Sentry | High | Error tracking — core MobileWest skill |
+| Integrate Sentry | High | Error tracking |
 | Add analytics (PostHog/Plausible) | Medium | Understand user behavior |
-| Add MobileWest branding | Medium | Footer or subtle placement |
 
 ### Phase 2 — Payments & Virality (January 2026)
 
@@ -114,7 +113,7 @@ Potential pivot themes (preserve all gameplay):
 | Test refund flow | Medium | Process manually, learn the flow |
 | Log aggregation (Axiom/LogTail) | Medium | Ops learning |
 | Uptime monitoring (UptimeRobot) | Low | Basic availability tracking |
-| Document learnings | Low | Prep for MobileWest launch |
+| Document learnings | Low | Reference for future projects |
 
 ---
 
@@ -140,25 +139,6 @@ Potential pivot themes (preserve all gameplay):
 
 ---
 
-## Brand Integration
-
-### MobileWest Visibility
-
-- README attribution: "A MobileWest project"
-- In-game footer or credits screen
-- Share cards include MobileWest branding
-- Portfolio listing on mobilewest.com.br
-
-### Domain Strategy
-
-| Domain | Purpose |
-|--------|---------|
-| shurato.com.br | Temporary game hosting |
-| mobilewest.com.br | Primary company domain |
-| Future: dedicated game domain | Optional, if game gains traction |
-
----
-
 ## Risk Mitigation
 
 | Risk | Mitigation |
@@ -177,8 +157,7 @@ By end of February 2026:
 1. Payment infrastructure working (subscriptions, one-time, refunds)
 2. Monitoring stack operational (errors, logs, uptime)
 3. Game playable and fun for friends
-4. MobileWest branding integrated
-5. Learnings documented for MobileWest launch
+4. Learnings documented for future reference
 
 ---
 

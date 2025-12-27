@@ -2,8 +2,6 @@
 
 A stylized 3D multiplayer delivery racer built with Three.js. Race your moto through a compact city, pick up orders at restaurants, deliver to customers, and compete on the leaderboard while seeing other couriers in real time.
 
-**A [MobileWest](https://mobilewest.com.br) project.**
-
 ## How to Play
 
 1. **Start** – Pick a name and hit play
