@@ -109,14 +109,28 @@ export function showFlyingMoney(amount) {
 
     if (!hud || !scorePanel) return;
 
-    // Create flying money element
-    const flyingMoney = document.createElement('div');
-    flyingMoney.className = 'flying-money';
-    flyingMoney.innerHTML = `+R$ ${amount},00 <span class="money-bills">💵</span>`;
+    // Calculate number of bills (1 bill per R$2, minimum 1, max 10)
+    const billCount = Math.min(10, Math.max(1, Math.ceil(amount / 2)));
+    const delayBetweenBills = 80; // ms between each bill
 
-    // Start position - center of screen
-    const startX = window.innerWidth / 2;
-    const startY = window.innerHeight / 2;
+    // Spawn bills with staggered timing
+    for (let i = 0; i < billCount; i++) {
+        setTimeout(() => {
+            spawnFlyingBill(hud, scorePanel, i, billCount);
+        }, i * delayBetweenBills);
+    }
+}
+
+function spawnFlyingBill(hud, scorePanel, index, totalBills) {
+    const bill = document.createElement('div');
+    bill.className = 'flying-money';
+    bill.textContent = '💵';
+
+    // Start position - center of screen with slight random offset
+    const offsetX = (Math.random() - 0.5) * 60;
+    const offsetY = (Math.random() - 0.5) * 40;
+    const startX = window.innerWidth / 2 + offsetX;
+    const startY = window.innerHeight / 2 + offsetY;
 
     // End position - score panel
     const scorePanelRect = scorePanel.getBoundingClientRect();
@@ -124,15 +138,17 @@ export function showFlyingMoney(amount) {
     const endY = scorePanelRect.top + scorePanelRect.height / 2;
 
     // Set initial position
-    flyingMoney.style.left = `${startX}px`;
-    flyingMoney.style.top = `${startY}px`;
-    flyingMoney.style.transform = 'translate(-50%, -50%) scale(1.2)';
+    bill.style.left = `${startX}px`;
+    bill.style.top = `${startY}px`;
+    bill.style.transform = 'translate(-50%, -50%) scale(1.3)';
+    bill.style.fontSize = '1.8rem';
 
-    hud.appendChild(flyingMoney);
+    hud.appendChild(bill);
 
     // Animate to score panel
-    const duration = 800;
+    const duration = 600 + Math.random() * 200; // Slight variation in speed
     const startTime = performance.now();
+    const arcHeight = -60 - Math.random() * 40; // Random arc height
 
     function animate(currentTime) {
         const elapsed = currentTime - startTime;
@@ -143,26 +159,32 @@ export function showFlyingMoney(amount) {
 
         // Calculate current position with arc
         const currentX = startX + (endX - startX) * eased;
-        const arcHeight = -80 * Math.sin(progress * Math.PI);
-        const currentY = startY + (endY - startY) * eased + arcHeight;
+        const arcY = arcHeight * Math.sin(progress * Math.PI);
+        const currentY = startY + (endY - startY) * eased + arcY;
 
-        // Scale down as it approaches target
-        const scale = 1.2 - (0.7 * eased);
+        // Scale down and rotate as it approaches target
+        const scale = 1.3 - (0.9 * eased);
+        const rotation = progress * 360 * (index % 2 === 0 ? 1 : -1); // Alternate rotation direction
 
-        flyingMoney.style.left = `${currentX}px`;
-        flyingMoney.style.top = `${currentY}px`;
-        flyingMoney.style.transform = `translate(-50%, -50%) scale(${scale})`;
-        flyingMoney.style.opacity = progress > 0.8 ? 1 - ((progress - 0.8) / 0.2) : 1;
+        bill.style.left = `${currentX}px`;
+        bill.style.top = `${currentY}px`;
+        bill.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${rotation}deg)`;
+        bill.style.opacity = progress > 0.7 ? 1 - ((progress - 0.7) / 0.3) : 1;
 
         if (progress < 1) {
             requestAnimationFrame(animate);
         } else {
-            // Animation complete - pulse the score panel
-            flyingMoney.remove();
-            scorePanel.classList.add('pulse');
-            setTimeout(() => {
+            bill.remove();
+
+            // Pulse score panel on last bill
+            if (index === totalBills - 1) {
                 scorePanel.classList.remove('pulse');
-            }, 400);
+                scorePanel.offsetHeight; // Force reflow
+                scorePanel.classList.add('pulse');
+                setTimeout(() => {
+                    scorePanel.classList.remove('pulse');
+                }, 400);
+            }
         }
     }
 
